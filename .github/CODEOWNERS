@@ -1,0 +1,12 @@
+# Reviews are requested automatically for these paths. With "Require review from Code Owners" enabled on the
+# development branch ruleset, changes to them cannot merge without an owner's approval (see docs/releasing.md).
+
+# Default owner
+*                       @MrSluffy
+
+# Release and CI pipeline, and everything that runs during the build
+/.github/               @MrSluffy
+/gradle/                @MrSluffy
+/gradlew                @MrSluffy
+/gradlew.bat            @MrSluffy
+*.gradle.kts            @MrSluffy

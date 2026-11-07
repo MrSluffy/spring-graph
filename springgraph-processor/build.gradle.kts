@@ -1,12 +1,11 @@
 plugins {
     `java-library`
-    `maven-publish`
+    // Configures the publication (with sources and javadoc jars), signing, and the Maven Central upload.
+    alias(libs.plugins.maven.publish)
 }
 
 java {
     toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.toolchain.get()) }
-    withSourcesJar()
-    withJavadocJar()
 }
 
 dependencies {
@@ -44,25 +43,66 @@ tasks.withType<Jar>().configureEach {
     into("META-INF") { from(rootProject.file("LICENSE"), rootProject.file("NOTICE")) }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("processor") {
-            from(components["java"])
-            pom {
-                name = "SpringGraph processor"
-                description = "Experimental build-time validation of a supported subset of Spring constructor injection."
-                developers {
-                    developer { name = "John Andrew Camu" }
-                }
-                licenses {
-                    license {
-                        name = "Apache License, Version 2.0"
-                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                        distribution = "repo"
-                    }
-                }
+// Publishing targets (see docs/releasing.md):
+//   ./gradlew publishToMavenLocal                                   local testing, no credentials or signing needed
+//   ./gradlew publishAllPublicationsToGitHubPackagesRepository      GitHub Packages
+//   ./gradlew publishAndReleaseToMavenCentral                       Maven Central (signed)
+mavenPublishing {
+    coordinates(project.group.toString(), "springgraph-processor", project.version.toString())
+    publishToMavenCentral()
+
+    // Maven Central requires signatures. Sign whenever a key is supplied (ORG_GRADLE_PROJECT_signingInMemoryKey),
+    // so local builds and publishToMavenLocal keep working without one.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
+
+    pom {
+        name = "SpringGraph processor"
+        description = "Experimental build-time validation of a supported subset of Spring constructor injection."
+        inceptionYear = "2026"
+        url = "https://github.com/MrSluffy/spring-graph"
+        licenses {
+            license {
+                name = "Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "repo"
             }
         }
+        developers {
+            developer {
+                id = "MrSluffy"
+                name = "John Andrew Camu"
+                url = "https://github.com/MrSluffy"
+            }
+        }
+        scm {
+            url = "https://github.com/MrSluffy/spring-graph"
+            connection = "scm:git:https://github.com/MrSluffy/spring-graph.git"
+            developerConnection = "scm:git:ssh://git@github.com/MrSluffy/spring-graph.git"
+        }
+        issueManagement {
+            system = "GitHub"
+            url = "https://github.com/MrSluffy/spring-graph/issues"
+        }
     }
-    // Only the local Maven repository (~/.m2) is configured: ./gradlew publishToMavenLocal
+}
+
+publishing {
+    repositories {
+        // Release staging: a plain Maven-layout directory, written without any credentials or signing key.
+        // The release workflow builds here once, then signs and uploads these exact files without running Gradle
+        // again (see docs/releasing.md). ./gradlew :springgraph-processor:publishAllPublicationsToStagingRepository
+        maven {
+            name = "Staging"
+            url = uri(layout.buildDirectory.dir("staging-repo"))
+        }
+        // Manual use only; the release workflow does not run Gradle with credentials.
+        // Credentials: ORG_GRADLE_PROJECT_GitHubPackagesUsername / ORG_GRADLE_PROJECT_GitHubPackagesPassword.
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/MrSluffy/spring-graph")
+            credentials(PasswordCredentials::class)
+        }
+    }
 }

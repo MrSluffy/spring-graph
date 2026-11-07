@@ -1,0 +1,514 @@
+name: Release
+
+# Push a signed tag matching the project version to release, e.g. version = "0.2.0" and `git tag -s v0.2.0`.
+#
+# Security model (details and required repository settings: docs/releasing.md):
+# - Repository code (Gradle) runs only in `verify`, which has no secrets and a read-only token.
+# - `verify` requires a tag signed by the key configured in repository settings, on a commit of the release branch,
+#   and records the verified commit. Every publishing job re-checks that the tag still points to that commit.
+# - `verify` stages the artifacts once. Later jobs check out nothing, verify the staged files against checksums passed
+#   through job outputs, and use only shell steps defined in this file plus gpg, curl, gh, and one pinned Maven plugin.
+# - Each secret is available to exactly one job, and those jobs run in the `release` environment.
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_BRANCH: development
+
+jobs:
+  verify:
+    name: Verify, build, and stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.tag.outputs.sha }}
+      checksums: ${{ steps.stage.outputs.checksums }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      # Explicitly refresh the release branch and the annotated tag object (checkout can store tags as lightweight).
+      # The read-only token is passed for this command only and is not persisted.
+      - name: Fetch release branch and tag
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$auth" fetch --no-tags --force origin \
+            "+refs/heads/${RELEASE_BRANCH}:refs/remotes/origin/${RELEASE_BRANCH}" \
+            "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+
+      - name: Tag must be annotated and point to the triggering commit
+        id: tag
+        run: |
+          if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" != "tag" ]; then
+            echo "::error::${GITHUB_REF_NAME} is a lightweight tag. Release tags must be signed: git tag -s ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+          commit=$(git rev-parse "refs/tags/${GITHUB_REF_NAME}^{commit}")
+          if [ "$commit" != "$GITHUB_SHA" ]; then
+            echo "::error::${GITHUB_REF_NAME} now points to ${commit}, but this run was started for ${GITHUB_SHA}."
+            exit 1
+          fi
+          echo "sha=${commit}" >> "$GITHUB_OUTPUT"
+
+      # Policy: any commit that is already on the release branch may be released (not only the branch head).
+      - name: Tag must point to a commit on the release branch
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "refs/remotes/origin/${RELEASE_BRANCH}"; then
+            echo "::error::${GITHUB_REF_NAME} (${GITHUB_SHA}) is not on ${RELEASE_BRANCH}. Only reviewed commits can be released."
+            exit 1
+          fi
+
+      # Required. Both values are repository variables (settings, not code): the maintainer's armored public key and
+      # its primary key fingerprint. The tag must carry a good signature from exactly that primary key.
+      - name: Tag must be signed by the release maintainer key
+        env:
+          TAG_SIGNER_KEY: ${{ vars.RELEASE_TAG_SIGNER_KEY }}
+          TAG_SIGNER_FINGERPRINT: ${{ vars.RELEASE_TAG_SIGNER_FINGERPRINT }}
+        run: |
+          if [ -z "$TAG_SIGNER_KEY" ] || [ -z "$TAG_SIGNER_FINGERPRINT" ]; then
+            echo "::error::Repository variables RELEASE_TAG_SIGNER_KEY and RELEASE_TAG_SIGNER_FINGERPRINT are required. See docs/releasing.md."
+            exit 1
+          fi
+          export GNUPGHOME="$(mktemp -d)"
+          chmod 700 "$GNUPGHOME"
+          printf '%s\n' "$TAG_SIGNER_KEY" | gpg --batch --quiet --import
+          expected=$(printf '%s' "$TAG_SIGNER_FINGERPRINT" | tr -d ' ' | tr '[:lower:]' '[:upper:]')
+          if ! status=$(git verify-tag --raw "$GITHUB_REF_NAME" 2>&1); then
+            echo "$status"
+            echo "::error::${GITHUB_REF_NAME} does not have a valid signature."
+            exit 1
+          fi
+          # GOODSIG excludes expired and revoked keys. VALIDSIG fields: $3 is the signing (sub)key fingerprint and the
+          # optional $12 is the primary key fingerprint, so subkey signatures are compared by their primary key.
+          primary=$(awk '$1 == "[GNUPG:]" && $2 == "VALIDSIG" { print (NF >= 12 ? $12 : $3) }' <<<"$status")
+          if ! grep -Fq '[GNUPG:] GOODSIG ' <<<"$status" || [ "$primary" != "$expected" ]; then
+            echo "$status"
+            echo "::error::${GITHUB_REF_NAME} is signed by '${primary}', expected '${expected}'."
+            exit 1
+          fi
+          echo "Tag signed by ${primary}"
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Tag must match the project version
+        id: version
+        run: |
+          version=$(./gradlew -q :springgraph-processor:properties --console=plain | sed -n 's/^version: //p')
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match project version ${version} (expected v${version})"
+            exit 1
+          fi
+          case "$version" in
+            *-SNAPSHOT) echo "::error::Refusing to release a SNAPSHOT version: ${version}"; exit 1 ;;
+          esac
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: ./gradlew build --console=plain
+
+      - name: Stage artifacts
+        id: stage
+        run: |
+          ./gradlew :springgraph-processor:publishAllPublicationsToStagingRepository --console=plain
+          mkdir -p release
+          cp -r springgraph-processor/build/staging-repo release/repo
+          cp LICENSE NOTICE release/
+          cd release
+          find repo LICENSE NOTICE -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum > SHA256SUMS
+          echo "checksums=$(sha256sum SHA256SUMS | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: staged
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    name: Sign
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions: {}
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+      checksums: ${{ steps.sign.outputs.checksums }}
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: staged
+          path: release
+
+      - name: Verify staged files
+        env:
+          EXPECTED: ${{ needs.verify.outputs.checksums }}
+        working-directory: release
+        run: |
+          echo "${EXPECTED}  SHA256SUMS" | sha256sum --check --strict -
+          sha256sum --check --strict SHA256SUMS
+
+      # Signs the jars, POM and Gradle module metadata with gpg. No repository code runs in this job.
+      - name: Sign
+        id: sign
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        working-directory: release
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::notice::SIGNING_KEY is not configured; artifacts stay unsigned and Maven Central is skipped."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          else
+            # Every published artifact must be present before anything is signed.
+            missing=0
+            for name in "" "-sources" "-javadoc"; do
+              [ -n "$(find repo -type f -name "springgraph-processor-${VERSION}${name}.jar")" ] || { echo "::error::missing springgraph-processor-${VERSION}${name}.jar"; missing=1; }
+            done
+            for ext in pom module; do
+              [ -n "$(find repo -type f -name "springgraph-processor-${VERSION}.${ext}")" ] || { echo "::error::missing springgraph-processor-${VERSION}.${ext}"; missing=1; }
+            done
+            [ "$missing" -eq 0 ] || exit 1
+            # SIGNING_PASSWORD may be empty for an intentionally unprotected key; a protected key without it fails in gpg.
+            export GNUPGHOME="$(mktemp -d)"
+            chmod 700 "$GNUPGHOME"
+            printf '%s\n' "$SIGNING_KEY" | gpg --batch --quiet --import
+            find repo -type f \( -name '*.jar' -o -name '*.pom' -o -name '*.module' \) -print0 \
+              | LC_ALL=C sort -z \
+              | while IFS= read -r -d '' file; do
+                  printf '%s' "$SIGNING_PASSWORD" \
+                    | gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign "$file"
+                  gpg --batch --quiet --verify "$file.asc" "$file"
+                  echo "signed $file"
+                done
+            gpgconf --kill all
+            rm -rf "$GNUPGHOME"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          fi
+          find repo LICENSE NOTICE -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum > SHA256SUMS
+          echo "checksums=$(sha256sum SHA256SUMS | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  maven-central:
+    name: Publish to Maven Central
+    needs: [verify, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    environment: release
+    permissions:
+      contents: read # only to re-check the tag through the API
+    outputs:
+      enabled: ${{ steps.configured.outputs.value }}
+      type: ${{ steps.configured.outputs.type }}
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      VERIFIED_SHA: ${{ needs.verify.outputs.sha }}
+    steps:
+      - name: Check Maven Central configuration
+        id: configured
+        env:
+          SIGNED: ${{ needs.sign.outputs.signed }}
+          CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          PUBLISHING_TYPE: ${{ vars.MAVEN_CENTRAL_PUBLISHING_TYPE }}
+        run: |
+          # USER_MANAGED (default): Central validates, then you publish in the Portal UI.
+          # AUTOMATIC: publishes as soon as validation passes. Set the repository variable once releases are proven.
+          type="${PUBLISHING_TYPE:-USER_MANAGED}"
+          case "$type" in
+            USER_MANAGED|AUTOMATIC) ;;
+            *) echo "::error::MAVEN_CENTRAL_PUBLISHING_TYPE must be USER_MANAGED or AUTOMATIC, was '${type}'."; exit 1 ;;
+          esac
+          echo "type=${type}" >> "$GITHUB_OUTPUT"
+          if [ "$SIGNED" != "true" ] || [ -z "$CENTRAL_USERNAME" ] || [ -z "$CENTRAL_PASSWORD" ]; then
+            echo "::notice::Maven Central is not configured (needs MAVEN_CENTRAL_USERNAME, MAVEN_CENTRAL_PASSWORD and SIGNING_KEY); skipping."
+            echo "value=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: steps.configured.outputs.value == 'true'
+        with:
+          name: signed
+          path: release
+
+      - name: Verify signed files
+        if: steps.configured.outputs.value == 'true'
+        env:
+          EXPECTED: ${{ needs.sign.outputs.checksums }}
+        working-directory: release
+        run: |
+          echo "${EXPECTED}  SHA256SUMS" | sha256sum --check --strict -
+          sha256sum --check --strict SHA256SUMS
+
+      # Bundle layout: https://central.sonatype.org/publish/publish-portal-upload/
+      - name: Build Central bundle
+        if: steps.configured.outputs.value == 'true'
+        working-directory: release/repo
+        run: |
+          zip -q -r ../central-bundle.zip . -x '*maven-metadata.xml*'
+          unzip -l ../central-bundle.zip
+
+      # Same check in every publishing job: publish only if the tag still points to the commit verify built.
+      - name: Tag must still point to the verified commit
+        if: steps.configured.outputs.value == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! ref=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" \
+                --jq '.object.type + " " + .object.sha'); then
+            echo "::error::Could not look up ${GITHUB_REF_NAME} through the GitHub API."
+            exit 1
+          fi
+          read -r type sha <<<"$ref"
+          if [ "$type" = "tag" ]; then
+            if ! sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}" --jq '.object.sha'); then
+              echo "::error::Could not resolve the annotated tag ${GITHUB_REF_NAME}."
+              exit 1
+            fi
+          elif [ "$type" != "commit" ]; then
+            echo "::error::${GITHUB_REF_NAME} points to an unexpected object type: '${type}'."
+            exit 1
+          fi
+          if [ "$sha" != "$VERIFIED_SHA" ]; then
+            echo "::error::${GITHUB_REF_NAME} now points to '${sha}'; the artifacts were built from ${VERIFIED_SHA}."
+            exit 1
+          fi
+
+      # API: https://central.sonatype.org/publish/publish-portal-api/ (upload and status are both POST).
+      - name: Upload and validate
+        if: steps.configured.outputs.value == 'true'
+        env:
+          CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          PUBLISHING_TYPE: ${{ steps.configured.outputs.type }}
+        run: |
+          token=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+          echo "::add-mask::$token"
+          api=https://central.sonatype.com/api/v1/publisher
+          id=$(curl --fail-with-body --silent --show-error --request POST \
+            --header "Authorization: Bearer $token" \
+            --form "bundle=@release/central-bundle.zip" \
+            "$api/upload?publishingType=${PUBLISHING_TYPE}&name=springgraph-processor-${VERSION}")
+          if ! [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            echo "::error::Unexpected upload response: $id"
+            exit 1
+          fi
+          echo "Deployment $id (${PUBLISHING_TYPE})"
+          # USER_MANAGED stops at VALIDATED; AUTOMATIC continues to PUBLISHED.
+          done_state=VALIDATED
+          [ "$PUBLISHING_TYPE" = "AUTOMATIC" ] && done_state=PUBLISHED
+          deadline=$((SECONDS + 3600))
+          while true; do
+            status=$(curl --fail-with-body --silent --show-error --request POST \
+              --header "Authorization: Bearer $token" "$api/status?id=$id")
+            state=$(jq -r '.deploymentState' <<<"$status")
+            echo "state: $state"
+            if [ "$state" = "FAILED" ]; then
+              jq '.errors' <<<"$status"
+              echo "::error::Central rejected deployment $id"
+              exit 1
+            fi
+            if [ "$state" = "$done_state" ] || { [ "$done_state" = "VALIDATED" ] && [ "$state" = "PUBLISHED" ]; }; then
+              break
+            fi
+            if [ "$SECONDS" -gt "$deadline" ]; then
+              echo "::error::Deployment $id did not reach ${done_state} within 60 minutes (last state: $state)"
+              exit 1
+            fi
+            sleep 15
+          done
+          if [ "$done_state" = "VALIDATED" ]; then
+            echo "::notice::Deployment $id is validated. Review it at https://central.sonatype.com/publishing/deployments and click Publish."
+          else
+            echo "::notice::Published to Maven Central; it can take up to 30 minutes to appear."
+          fi
+
+  github-packages:
+    name: Publish to GitHub Packages
+    needs: [verify, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # only to re-check the tag through the API
+      packages: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      VERIFIED_SHA: ${{ needs.verify.outputs.sha }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: signed
+          path: release
+
+      - name: Verify signed files
+        env:
+          EXPECTED: ${{ needs.sign.outputs.checksums }}
+        working-directory: release
+        run: |
+          echo "${EXPECTED}  SHA256SUMS" | sha256sum --check --strict -
+          sha256sum --check --strict SHA256SUMS
+
+      - name: Tag must still point to the verified commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! ref=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" \
+                --jq '.object.type + " " + .object.sha'); then
+            echo "::error::Could not look up ${GITHUB_REF_NAME} through the GitHub API."
+            exit 1
+          fi
+          read -r type sha <<<"$ref"
+          if [ "$type" = "tag" ]; then
+            if ! sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}" --jq '.object.sha'); then
+              echo "::error::Could not resolve the annotated tag ${GITHUB_REF_NAME}."
+              exit 1
+            fi
+          elif [ "$type" != "commit" ]; then
+            echo "::error::${GITHUB_REF_NAME} points to an unexpected object type: '${type}'."
+            exit 1
+          fi
+          if [ "$sha" != "$VERIFIED_SHA" ]; then
+            echo "::error::${GITHUB_REF_NAME} now points to '${sha}'; the artifacts were built from ${VERIFIED_SHA}."
+            exit 1
+          fi
+
+      # Writes ~/.m2/settings.xml with a `github` server whose credentials come from the env vars named here.
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      # Residual risk: Maven and this plugin run while the packages:write token is present. The plugin is pinned to an
+      # exact version, and the token cannot write repository contents or read other secrets.
+      - name: Deploy staged files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pom=$(find release/repo -name "springgraph-processor-${VERSION}.pom")
+          dir=$(dirname "$pom")
+          mvn -B -ntp org.apache.maven.plugins:maven-deploy-plugin:3.2.0:deploy-file \
+            -DrepositoryId=github \
+            -Durl="https://maven.pkg.github.com/${GITHUB_REPOSITORY}" \
+            -DpomFile="$pom" \
+            -Dfile="$dir/springgraph-processor-${VERSION}.jar" \
+            -Dsources="$dir/springgraph-processor-${VERSION}-sources.jar" \
+            -Djavadoc="$dir/springgraph-processor-${VERSION}-javadoc.jar"
+
+  github-release:
+    name: Create GitHub Release
+    needs: [verify, sign, maven-central, github-packages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      VERIFIED_SHA: ${{ needs.verify.outputs.sha }}
+      SIGNED: ${{ needs.sign.outputs.signed }}
+      CENTRAL_ENABLED: ${{ needs.maven-central.outputs.enabled }}
+      CENTRAL_TYPE: ${{ needs.maven-central.outputs.type }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: signed
+          path: release
+
+      - name: Verify signed files
+        env:
+          EXPECTED: ${{ needs.sign.outputs.checksums }}
+        working-directory: release
+        run: |
+          echo "${EXPECTED}  SHA256SUMS" | sha256sum --check --strict -
+          sha256sum --check --strict SHA256SUMS
+
+      - name: Tag must still point to the verified commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! ref=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" \
+                --jq '.object.type + " " + .object.sha'); then
+            echo "::error::Could not look up ${GITHUB_REF_NAME} through the GitHub API."
+            exit 1
+          fi
+          read -r type sha <<<"$ref"
+          if [ "$type" = "tag" ]; then
+            if ! sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}" --jq '.object.sha'); then
+              echo "::error::Could not resolve the annotated tag ${GITHUB_REF_NAME}."
+              exit 1
+            fi
+          elif [ "$type" != "commit" ]; then
+            echo "::error::${GITHUB_REF_NAME} points to an unexpected object type: '${type}'."
+            exit 1
+          fi
+          if [ "$sha" != "$VERIFIED_SHA" ]; then
+            echo "::error::${GITHUB_REF_NAME} now points to '${sha}'; the artifacts were built from ${VERIFIED_SHA}."
+            exit 1
+          fi
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir=$(dirname "$(find release/repo -name "springgraph-processor-${VERSION}.pom")")
+          mkdir assets
+          cp "$dir"/springgraph-processor-"${VERSION}"*.jar assets/
+          # Signatures must be attached whenever signing ran; a missing signature fails the release.
+          if [ "$SIGNED" = "true" ]; then
+            cp "$dir"/springgraph-processor-"${VERSION}"*.jar.asc assets/
+          fi
+          cp release/LICENSE release/NOTICE assets/
+          (cd assets && sha256sum -- * > SHA256SUMS.txt)
+          # 0.x versions are experimental, so they are marked as pre-releases.
+          prerelease=""
+          case "$VERSION" in 0.*|*-*) prerelease="--prerelease" ;; esac
+          # With USER_MANAGED, Maven Central is only validated at this point. Keep the release as a draft so it is not
+          # announced before the version is actually on Central; publish the draft after clicking Publish in the Portal.
+          draft=""
+          if [ "$CENTRAL_ENABLED" = "true" ] && [ "$CENTRAL_TYPE" = "USER_MANAGED" ]; then
+            draft="--draft"
+            echo "::notice::Created as a draft. Publish it after the Maven Central deployment is published."
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "SpringGraph ${VERSION}" \
+            --generate-notes \
+            $prerelease \
+            $draft \
+            assets/*

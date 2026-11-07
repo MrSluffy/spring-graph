@@ -15,8 +15,12 @@ spotless = "8.11.0"
 palantir-java-format = "2.103.0"
 ktlint = "1.8.0"
 
+# Publishing. 0.34.x is the newest line that supports Gradle 8 (0.36+ needs Gradle 9); it uploads via the Central Portal.
+maven-publish = "0.34.0"
+
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 
 [libraries]
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }

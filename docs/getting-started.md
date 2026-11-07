@@ -11,15 +11,22 @@ compiles. It does not change your runtime: Spring still constructs every bean. N
 
 ## 1. Get the processor
 
-0.1.0 is not published to a public repository. Build it and install it into your local Maven repository:
+Releases are published to Maven Central and GitHub Packages, and attached to
+[GitHub Releases](https://github.com/MrSluffy/spring-graph/releases) (see [releasing](releasing.md)). Until the first
+release is out, build it from source.
 
-```
-git clone <this repository>
-cd springgraph
-./gradlew :springgraph-processor:publishToMavenLocal
-```
+- **Maven Central**: no extra repository needed for Maven; for Gradle use `mavenCentral()`.
+- **GitHub Packages**: add the repository `https://maven.pkg.github.com/MrSluffy/spring-graph`. GitHub requires a
+  token with `read:packages` even for public packages.
+- **From source**: install into your local Maven repository, then use `mavenLocal()` in Gradle:
 
-This installs `io.springgraph:springgraph-processor:0.1.0` into `~/.m2/repository`.
+  ```
+  git clone https://github.com/MrSluffy/spring-graph.git
+  cd spring-graph
+  ./gradlew :springgraph-processor:publishToMavenLocal
+  ```
+
+  This installs `io.springgraph:springgraph-processor:0.1.0` into `~/.m2/repository`.
 
 ## 2. Add it to your build
 

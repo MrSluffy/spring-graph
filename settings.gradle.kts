@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        // com.vanniktech.maven.publish releases after 0.13 are only published to Maven Central.
+        mavenCentral()
+    }
+}
+
 rootProject.name = "springgraph"
 
 include("springgraph-processor")

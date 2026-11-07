@@ -1,6 +1,9 @@
 # Gradle
 .gradle/
 build/
+
+# Release staging created by .github/workflows/release.yml
+/release/
 !gradle/wrapper/gradle-wrapper.jar
 .kotlin/
 
@@ -10,6 +13,7 @@ pom-reversed.xml
 
 # Local evaluation and maintenance scripts (not published)
 /tools/
+/docs/releasing.md
 
 # Temporary files created by those scripts (normally removed by them)
 examples/maven-lombok/lombok.config

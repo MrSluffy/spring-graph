@@ -24,6 +24,7 @@ error: SG001: No static binding found for com.example.PaymentGateway.
 - [Graph boundaries](docs/architecture/graph-boundaries.md): the rules behind the findings
 - [Evaluation](docs/evaluation/): pilot results, false positives found, build overhead
 - [Changelog](CHANGELOG.md)
+- [Releasing](docs/releasing.md): how versions are published
 
 ## Build from source
 
