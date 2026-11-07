@@ -8,7 +8,7 @@ spring-boot = "3.5.16"
 jakarta-annotation = "3.0.0"
 junit = "5.10.3"
 compile-testing = "0.24.0"
-lombok = "1.18.38"
+lombok = "1.18.48"
 
 # Formatting (Spotless)
 spotless = "8.11.0"
