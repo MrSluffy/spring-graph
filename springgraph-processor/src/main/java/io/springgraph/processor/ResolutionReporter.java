@@ -1,0 +1,93 @@
+/*
+ * Copyright 2026 John Andrew Camu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.springgraph.processor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * Reports the graph-level findings once every dependency is resolved: SG001 missing, SG007 ambiguous (both with the
+ * dependency path), and SG003 eager constructor cycles.
+ */
+final class ResolutionReporter {
+
+    private final Diagnostics diagnostics;
+
+    ResolutionReporter(Diagnostics diagnostics) {
+        this.diagnostics = diagnostics;
+    }
+
+    void reportUnresolved(Map<String, Component> graph) {
+        DependencyPaths paths = new DependencyPaths(graph);
+        for (Component component : graph.values()) {
+            for (Dependency dependency : component.dependencies()) {
+                switch (dependency.resolution()) {
+                    case MISSING ->
+                        diagnostics.finding(
+                                Code.SG001,
+                                dependency.parameter(),
+                                missingMessage(dependency, paths.render(component.name(), dependency.type())));
+                    case AMBIGUOUS ->
+                        diagnostics.finding(
+                                Code.SG007,
+                                dependency.parameter(),
+                                "Ambiguous binding for " + dependency.type() + ". Candidates: "
+                                        + String.join(", ", dependency.targets()) + ".\n\nDependency path:\n"
+                                        + paths.render(component.name(), dependency.type()));
+                    default -> {}
+                }
+            }
+        }
+    }
+
+    /** Only statically resolved edges are followed: a cycle through a boundary or unsupported edge is not claimed. */
+    void reportCycles(Map<String, Component> graph) {
+        Map<String, List<String>> edges = new TreeMap<>();
+        for (Component component : graph.values()) {
+            List<String> targets = new ArrayList<>();
+            for (Dependency dependency : component.dependencies()) {
+                if (dependency.resolution() == Resolution.STATIC) {
+                    targets.add(dependency.target());
+                }
+            }
+            edges.put(component.name(), targets);
+        }
+        for (List<String> cycle : CycleDetector.findCycles(edges)) {
+            List<String> shown = new ArrayList<>(cycle);
+            shown.add(cycle.get(0));
+            diagnostics.finding(
+                    Code.SG003,
+                    graph.get(cycle.get(0)).type(),
+                    "Eager constructor dependency cycle:\n  " + String.join("\n    -> ", shown));
+        }
+    }
+
+    private String missingMessage(Dependency dependency, String path) {
+        String policy = diagnostics.mode() == Mode.STRICT
+                ? "This dependency is inside a closed static boundary."
+                : "Advisory mode: this is a suspected missing binding, not a proven error.";
+        return "No static binding found for " + dependency.type() + ".\n\n"
+                + "Dependency path:\n" + path + "\n\n"
+                + "Graph policy:\n  " + policy + "\n\n"
+                + "Possible fixes:\n"
+                + "  - Add a supported implementation.\n"
+                + "  - Include an existing component in the graph.\n"
+                + "  - Declare a runtime boundary (-A" + SpringGraphProcessor.OPT_BOUNDARIES + "=" + dependency.type()
+                + ") if Spring supplies this dependency.";
+    }
+}

@@ -1,0 +1,88 @@
+== diagnostics ==
+WARNING Proto.java:1 SG004: Unsupported scope 'prototype' on p.Proto. Only singleton components are validated; this component is excluded from the graph.
+---
+WARNING TwoCtors.java:1 SG005: p.TwoCtors has 2 accessible constructors. Exactly one is supported; this component is excluded from the graph.
+---
+WARNING Messaging.java:4 SG006: Several beans match p.Sender (p.MailSender, p.SmsSender), but parameter 'smsSender' matches the bean name of p.SmsSender. Spring selects it only if the code is compiled with -parameters (Spring Boot's build plugins enable it); otherwise startup fails as ambiguous. The dependency is not validated. Add @Qualifier("smsSender") to make the choice independent of compiler flags.
+---
+WARNING Messaging.java:4 SG006: @Primary among candidates for p.Notifier is not supported yet; the dependency is not validated.
+---
+WARNING Unsupported.java:4 SG008: @Qualifier on 'q' is not supported yet; the dependency is not validated.
+---
+WARNING Unsupported.java:5 SG006: @Lazy injection of p.Gateway is not supported; the dependency is not validated.
+---
+WARNING Unsupported.java:6 SG006: Generic, collection, optional or provider injection of java.util.List<p.Gateway> is not supported; the dependency is not validated.
+---
+WARNING Unsupported.java:6 SG006: Generic, collection, optional or provider injection of java.util.Optional<p.Gateway> is not supported; the dependency is not validated.
+---
+WARNING - SG009: Runtime boundary 'java.lang.Runnable' is never requested by any analysed component. Remove it if it is stale.
+---
+WARNING - SG009: Runtime boundary 'p.Clok' was not found on the compilation classpath, so it can never match a dependency.
+---
+WARNING - SG009: Runtime boundary 'p.Gateway' is declared but does not apply to any dependency: every dependency requesting it is resolved statically or classified by another rule (@Value, @Qualifier, generics, conditional candidates without this declaration). Remove it, or it will mislead readers of the build configuration.
+---
+WARNING Messaging.java:4 SG007: Ambiguous binding for p.Sender. Candidates: p.MailSender, p.SmsSender.
+  
+  Dependency path:
+    p.Messaging
+      -> p.Sender
+---
+WARNING OrderService.java:5 SG001: No static binding found for p.Missing.
+  
+  Dependency path:
+    p.OrderService
+      -> p.Missing
+  
+  Graph policy:
+    Advisory mode: this is a suspected missing binding, not a proven error.
+  
+  Possible fixes:
+    - Add a supported implementation.
+    - Include an existing component in the graph.
+    - Declare a runtime boundary (-Aspringgraph.runtimeBoundaries=p.Missing) if Spring supplies this dependency.
+---
+WARNING CycleA.java:1 SG003: Eager constructor dependency cycle:
+    p.CycleA
+      -> p.CycleB
+      -> p.CycleA
+---
+NOTE - SpringGraph: only 3 of 15 dependencies are statically validated; the rest are runtime boundaries, Spring Data repositories, @Value, or unsupported. See META-INF/springgraph/graph.txt.
+---
+== report ==
+SpringGraph report (mode=advisory)
+
+p.CycleA
+  p.CycleB -> p.CycleB [validated]
+p.CycleB
+  p.CycleA -> p.CycleA [validated]
+p.DefaultGateway
+p.JdbcStore [conditional: @Profile; never used to resolve a dependency]
+p.JpaStore [conditional: @Profile; never used to resolve a dependency]
+p.MailSender
+p.Messaging
+  p.Sender -> <ambiguous: p.MailSender, p.SmsSender> [unresolved]
+  p.Sender -> [unsupported, not validated]
+  p.Notifier -> [unsupported, not validated]
+p.OrderService
+  p.Gateway -> p.DefaultGateway [validated]
+  p.Clock -> Spring runtime boundary [not statically validated]
+  p.OrderRepo -> Spring Data repository, created at runtime [not statically validated]
+  java.lang.String -> @Value property/expression [not a bean, not validated]
+  p.Missing -> <missing> [unresolved]
+p.OtherNotifier
+p.PrimaryNotifier
+p.SmsSender
+p.StoreUser
+  p.Store -> Spring runtime boundary [not statically validated]
+p.Unsupported
+  p.Gateway -> [unsupported, not validated]
+  p.Gateway -> [unsupported, not validated]
+  java.util.List -> [unsupported, not validated]
+  java.util.Optional -> [unsupported, not validated]
+
+Excluded components
+  p.Proto: scope 'prototype' is not supported
+  p.TwoCtors: 2 accessible constructors (exactly one is supported)
+  p.Config: @Configuration is not interpreted (its @Bean methods are unknown)
+
+Coverage: 3 of 15 dependencies statically validated

@@ -1,0 +1,43 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.kotlin/
+
+# Maven (examples/maven-lombok)
+target/
+pom-reversed.xml
+
+# Local evaluation and maintenance scripts (not published)
+/tools/
+
+# Temporary files created by those scripts (normally removed by them)
+examples/maven-lombok/lombok.config
+examples/maven-lombok/src/main/java/seed/
+examples/pilot-boot/src/main/java/pilot/seed/
+
+# Compiled / packaged files
+*.class
+*.log
+hs_err_pid*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse / VS Code Java
+.classpath
+.project
+.settings/
+bin/
+.vscode/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+tools

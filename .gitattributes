@@ -1,0 +1,11 @@
+# Normalize text files to LF in the repository.
+* text=auto
+
+# Shell scripts must stay LF so they run on Linux/macOS runners; Windows scripts stay CRLF.
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary
+*.jar binary
