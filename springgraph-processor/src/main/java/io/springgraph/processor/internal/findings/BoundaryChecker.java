@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.findings;
 
+import io.springgraph.processor.internal.diagnostic.Code;
+import io.springgraph.processor.internal.diagnostic.Diagnostics;
+import io.springgraph.processor.internal.resolution.BoundaryUsage;
 import java.util.Locale;
 import java.util.Set;
 import javax.lang.model.util.Elements;
@@ -23,7 +26,7 @@ import javax.lang.model.util.Elements;
  * SG009 for declared runtime boundaries that do nothing. A silently ignored declaration would hide a missing binding, so
  * each one is reported: not on the classpath (usually a typo), never requested (stale), or requested but never applied.
  */
-final class BoundaryChecker {
+public final class BoundaryChecker {
 
     /** Suggestions are offered for simple names within this edit distance. */
     private static final int MAX_SUGGESTION_DISTANCE = 3;
@@ -31,13 +34,13 @@ final class BoundaryChecker {
     private final Elements elements;
     private final Diagnostics diagnostics;
 
-    BoundaryChecker(Elements elements, Diagnostics diagnostics) {
+    public BoundaryChecker(Elements elements, Diagnostics diagnostics) {
         this.elements = elements;
         this.diagnostics = diagnostics;
     }
 
     /** @param boundaries declared boundaries, in a deterministic (sorted) order */
-    void check(Set<String> boundaries, BoundaryUsage usage) {
+    public void check(Set<String> boundaries, BoundaryUsage usage) {
         for (String boundary : boundaries) {
             if (usage.wasApplied(boundary)) {
                 continue;

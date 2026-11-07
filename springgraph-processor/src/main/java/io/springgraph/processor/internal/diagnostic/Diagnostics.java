@@ -13,39 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.diagnostic;
 
+import io.springgraph.processor.internal.config.Mode;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
 /** Emits diagnostics as {@code "SGnnn: message"} with the severity rules from docs/reference/diagnostics.md. */
-final class Diagnostics {
+public final class Diagnostics {
 
     private final Messager messager;
     private final Mode mode;
 
-    Diagnostics(Messager messager, Mode mode) {
+    public Diagnostics(Messager messager, Mode mode) {
         this.messager = messager;
         this.mode = mode;
     }
 
-    Mode mode() {
+    public Mode mode() {
         return mode;
     }
 
     /** A finding: error in strict mode, warning in advisory mode. Attached to {@code element} when it is not null. */
-    void finding(Code code, Element element, String message) {
+    public void finding(Code code, Element element, String message) {
         print(mode.findingKind(), code, element, message);
     }
 
     /** Always a warning, regardless of mode. */
-    void warning(Code code, String message) {
+    public void warning(Code code, String message) {
         print(Diagnostic.Kind.WARNING, code, null, message);
     }
 
     /** An informational note without a code. */
-    void note(String message) {
+    public void note(String message) {
         messager.printMessage(Diagnostic.Kind.NOTE, message);
     }
 

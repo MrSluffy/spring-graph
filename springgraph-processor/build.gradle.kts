@@ -21,7 +21,14 @@ dependencies {
 
 // Processor runs inside the application's javac, so it must load on the oldest supported JDK.
 tasks.compileJava { options.release = libs.versions.java.release.get().toInt() }
-tasks.javadoc { (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet") }
+tasks.javadoc {
+    (options as StandardJavadocDocletOptions).apply {
+        addStringOption("Xdoclint:none", "-quiet")
+        // Internal packages are documented for contributors, but shown separately from the API.
+        group("API", listOf("io.springgraph.processor"))
+        group("Internal (no compatibility guarantee)", listOf("io.springgraph.processor.internal*"))
+    }
+}
 
 tasks.test {
     useJUnitPlatform()

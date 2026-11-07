@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.report;
 
+import io.springgraph.processor.SpringGraphProcessor;
+import io.springgraph.processor.internal.config.Mode;
+import io.springgraph.processor.internal.model.Component;
+import io.springgraph.processor.internal.model.Dependency;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,12 +30,12 @@ import java.util.Set;
  * @param validated dependencies statically validated
  * @param total     dependencies of analysed components
  */
-record GraphReport(String text, int validated, int total) {
+public record GraphReport(String text, int validated, int total) {
 
     /** Below this share of validated dependencies, the build prints a note pointing at the report. */
     private static final double LOW_COVERAGE = 0.5;
 
-    boolean isLowCoverage() {
+    public boolean isLowCoverage() {
         return total > 0 && validated < total * LOW_COVERAGE;
     }
 
@@ -39,7 +43,7 @@ record GraphReport(String text, int validated, int total) {
      * @param graph                components sorted by name
      * @param configurationClasses {@code @Configuration} classes, sorted; listed as not interpreted
      */
-    static GraphReport render(Mode mode, Map<String, Component> graph, Set<String> configurationClasses) {
+    public static GraphReport render(Mode mode, Map<String, Component> graph, Set<String> configurationClasses) {
         StringBuilder sb = new StringBuilder();
         sb.append("SpringGraph report (mode=").append(mode.label()).append(")\n\n");
 

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.findings;
 
 /** String helpers for "did you mean" suggestions. */
-final class TextSimilarity {
+public final class TextSimilarity {
 
     private TextSimilarity() {}
 
     /** Levenshtein distance. */
-    static int editDistance(String a, String b) {
+    public static int editDistance(String a, String b) {
         int[] previous = new int[b.length() + 1];
         for (int j = 0; j <= b.length(); j++) {
             previous[j] = j;
@@ -39,7 +39,7 @@ final class TextSimilarity {
     }
 
     /** "a.b.Foo" to "Foo". */
-    static String simpleName(String qualifiedName) {
+    public static String simpleName(String qualifiedName) {
         return qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1);
     }
 }

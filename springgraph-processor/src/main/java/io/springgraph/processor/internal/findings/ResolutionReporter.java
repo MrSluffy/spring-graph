@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.findings;
 
+import io.springgraph.processor.SpringGraphProcessor;
+import io.springgraph.processor.internal.config.Mode;
+import io.springgraph.processor.internal.diagnostic.Code;
+import io.springgraph.processor.internal.diagnostic.Diagnostics;
+import io.springgraph.processor.internal.model.Component;
+import io.springgraph.processor.internal.model.Dependency;
+import io.springgraph.processor.internal.model.Resolution;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,15 +31,15 @@ import java.util.TreeMap;
  * Reports the graph-level findings once every dependency is resolved: SG001 missing, SG007 ambiguous (both with the
  * dependency path), and SG003 eager constructor cycles.
  */
-final class ResolutionReporter {
+public final class ResolutionReporter {
 
     private final Diagnostics diagnostics;
 
-    ResolutionReporter(Diagnostics diagnostics) {
+    public ResolutionReporter(Diagnostics diagnostics) {
         this.diagnostics = diagnostics;
     }
 
-    void reportUnresolved(Map<String, Component> graph) {
+    public void reportUnresolved(Map<String, Component> graph) {
         DependencyPaths paths = new DependencyPaths(graph);
         for (Component component : graph.values()) {
             for (Dependency dependency : component.dependencies()) {
@@ -56,7 +63,7 @@ final class ResolutionReporter {
     }
 
     /** Only statically resolved edges are followed: a cycle through a boundary or unsupported edge is not claimed. */
-    void reportCycles(Map<String, Component> graph) {
+    public void reportCycles(Map<String, Component> graph) {
         Map<String, List<String>> edges = new TreeMap<>();
         for (Component component : graph.values()) {
             List<String> targets = new ArrayList<>();

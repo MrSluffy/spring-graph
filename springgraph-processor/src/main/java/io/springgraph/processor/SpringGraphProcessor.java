@@ -15,6 +15,15 @@
  */
 package io.springgraph.processor;
 
+import io.springgraph.processor.internal.GraphAnalysis;
+import io.springgraph.processor.internal.config.Options;
+import io.springgraph.processor.internal.diagnostic.Code;
+import io.springgraph.processor.internal.discovery.ComponentFactory;
+import io.springgraph.processor.internal.discovery.SpringTypes;
+import io.springgraph.processor.internal.findings.BoundaryChecker;
+import io.springgraph.processor.internal.findings.ResolutionReporter;
+import io.springgraph.processor.internal.report.GraphReport;
+import io.springgraph.processor.internal.resolution.DependencyResolver;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;

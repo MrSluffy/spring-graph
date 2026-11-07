@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.diagnostic;
 
 /** Diagnostic codes. Documented in docs/reference/diagnostics.md; the names are part of the user-facing contract. */
-enum Code {
+public enum Code {
     /** Missing binding inside a closed static boundary. */
     SG001,
     /** Reserved: conflicting binding identity. Not emitted. */

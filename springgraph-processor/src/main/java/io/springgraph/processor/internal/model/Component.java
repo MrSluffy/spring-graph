@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import javax.lang.model.element.TypeElement;
  * A <em>conditional</em> component ({@code @Profile}, {@code @Conditional*}) is analysed, but never used to resolve a
  * dependency.
  */
-final class Component {
+public final class Component {
 
     private final String name;
     private final TypeElement type;
@@ -47,51 +47,51 @@ final class Component {
         this.exclusion = exclusion;
     }
 
-    static Component analysed(TypeElement type, String conditional, ExecutableElement constructor) {
+    public static Component analysed(TypeElement type, String conditional, ExecutableElement constructor) {
         return new Component(type.getQualifiedName().toString(), type, conditional, constructor, null);
     }
 
-    static Component excluded(TypeElement type, String conditional, String reason) {
+    public static Component excluded(TypeElement type, String conditional, String reason) {
         return new Component(type.getQualifiedName().toString(), type, conditional, null, reason);
     }
 
     /** Fully qualified class name; also the component's identity in the graph. */
-    String name() {
+    public String name() {
         return name;
     }
 
-    TypeElement type() {
+    public TypeElement type() {
         return type;
     }
 
     /** E.g. "@Profile", or null when the component is unconditional. */
-    String conditional() {
+    public String conditional() {
         return conditional;
     }
 
-    boolean isConditional() {
+    public boolean isConditional() {
         return conditional != null;
     }
 
     /** The selected constructor; null for excluded components. */
-    ExecutableElement constructor() {
+    public ExecutableElement constructor() {
         return constructor;
     }
 
-    boolean isExcluded() {
+    public boolean isExcluded() {
         return exclusion != null;
     }
 
     /** Why the component is excluded, or null. */
-    String exclusion() {
+    public String exclusion() {
         return exclusion;
     }
 
-    List<Dependency> dependencies() {
+    public List<Dependency> dependencies() {
         return Collections.unmodifiableList(dependencies);
     }
 
-    void addDependency(Dependency dependency) {
+    public void addDependency(Dependency dependency) {
         dependencies.add(dependency);
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.discovery;
 
 import java.util.Set;
 
@@ -21,20 +21,20 @@ import java.util.Set;
  * Fully qualified names of the Spring types the processor recognizes. Matched by name, so the processor has no
  * dependency on Spring and works with any Spring version that uses these names.
  */
-final class SpringTypes {
+public final class SpringTypes {
 
-    static final String CONFIGURATION = "org.springframework.context.annotation.Configuration";
-    static final String SCOPE = "org.springframework.context.annotation.Scope";
-    static final String CONDITIONAL = "org.springframework.context.annotation.Conditional";
-    static final String LAZY = "org.springframework.context.annotation.Lazy";
-    static final String PRIMARY = "org.springframework.context.annotation.Primary";
-    static final String VALUE = "org.springframework.beans.factory.annotation.Value";
-    static final String QUALIFIER = "org.springframework.beans.factory.annotation.Qualifier";
-    static final String SPRING_DATA_REPOSITORY = "org.springframework.data.repository.Repository";
-    static final String NO_REPOSITORY_BEAN = "org.springframework.data.repository.NoRepositoryBean";
+    public static final String CONFIGURATION = "org.springframework.context.annotation.Configuration";
+    public static final String SCOPE = "org.springframework.context.annotation.Scope";
+    public static final String CONDITIONAL = "org.springframework.context.annotation.Conditional";
+    public static final String LAZY = "org.springframework.context.annotation.Lazy";
+    public static final String PRIMARY = "org.springframework.context.annotation.Primary";
+    public static final String VALUE = "org.springframework.beans.factory.annotation.Value";
+    public static final String QUALIFIER = "org.springframework.beans.factory.annotation.Qualifier";
+    public static final String SPRING_DATA_REPOSITORY = "org.springframework.data.repository.Repository";
+    public static final String NO_REPOSITORY_BEAN = "org.springframework.data.repository.NoRepositoryBean";
 
     /** Direct stereotypes only. Composed (meta-annotated) stereotypes are not supported. */
-    static final Set<String> STEREOTYPES = Set.of(
+    public static final Set<String> STEREOTYPES = Set.of(
             "org.springframework.stereotype.Component",
             "org.springframework.stereotype.Service",
             "org.springframework.stereotype.Repository",
@@ -42,7 +42,7 @@ final class SpringTypes {
             "org.springframework.web.bind.annotation.RestController");
 
     /** Injection shapes whose Spring semantics are not modelled (collections, optionals, providers). */
-    static final Set<String> CONTAINER_TYPES = Set.of(
+    public static final Set<String> CONTAINER_TYPES = Set.of(
             "java.util.Optional",
             "java.util.Collection",
             "java.util.List",

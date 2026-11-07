@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.resolution;
 
+import io.springgraph.processor.SpringGraphProcessor;
+import io.springgraph.processor.internal.diagnostic.Code;
+import io.springgraph.processor.internal.diagnostic.Diagnostics;
+import io.springgraph.processor.internal.discovery.Annotations;
+import io.springgraph.processor.internal.discovery.SpringTypes;
+import io.springgraph.processor.internal.model.Component;
+import io.springgraph.processor.internal.model.Dependency;
+import io.springgraph.processor.internal.model.Resolution;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +44,7 @@ import javax.lang.model.util.Types;
  * <p>Guiding rule: when the processor cannot determine what Spring would do, the dependency is UNSUPPORTED (SG006/SG008),
  * never resolved and never reported as an error.
  */
-final class DependencyResolver {
+public final class DependencyResolver {
 
     private final Types types;
     private final Elements elements;
@@ -44,7 +52,7 @@ final class DependencyResolver {
     private final Diagnostics diagnostics;
     private final BoundaryUsage usage;
 
-    DependencyResolver(
+    public DependencyResolver(
             Types types, Elements elements, Set<String> boundaries, Diagnostics diagnostics, BoundaryUsage usage) {
         this.types = types;
         this.elements = elements;
@@ -56,7 +64,7 @@ final class DependencyResolver {
     /**
      * @param graph every discovered component (including excluded ones, which still count as candidates), sorted by name
      */
-    Dependency resolve(VariableElement parameter, Map<String, Component> graph) {
+    public Dependency resolve(VariableElement parameter, Map<String, Component> graph) {
         TypeMirror declared = parameter.asType();
         TypeMirror requested = types.erasure(declared);
         String type = requested.toString();

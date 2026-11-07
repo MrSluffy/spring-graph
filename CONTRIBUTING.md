@@ -46,19 +46,20 @@ seeded mistake that must fail the build), and `spotlessCheck`.
 
 ## Code map (`springgraph-processor`)
 
-| Class | Responsibility |
-|---|---|
-| `SpringGraphProcessor` | javac entry point: options, collecting candidates per round |
-| `GraphAnalysis` | the pipeline, in order: discover, resolve, check boundaries, report findings, write report |
-| `Options`, `Mode` | `-A` options |
-| `ComponentFactory` | scope and constructor rules (SG004, SG005) |
-| `DependencyResolver` | ordered resolution rules for one parameter (SG006, SG008); start here for resolution changes |
-| `BoundaryChecker`, `BoundaryUsage` | runtime boundary checks (SG009) |
-| `ResolutionReporter`, `DependencyPaths`, `CycleDetector` | SG001, SG007, SG003 |
-| `GraphReport` | report text |
-| `Component`, `Dependency`, `Resolution` | graph model |
-| `Annotations`, `SpringTypes` | reading Spring annotations by name |
-| `Diagnostics`, `Code` | severity rules and diagnostic codes |
+`io.springgraph.processor.SpringGraphProcessor` is the only API. Everything under `io.springgraph.processor.internal` is
+public only so the subpackages can use each other; it has no compatibility guarantee.
+
+| Package (`…processor.`) | Classes | Responsibility |
+|---|---|---|
+| (root) | `SpringGraphProcessor` | javac entry point: options, collecting candidates per round |
+| `internal` | `GraphAnalysis` | the pipeline, in order: discover, resolve, check boundaries, report findings, write report |
+| `internal.config` | `Options`, `Mode` | `-A` options |
+| `internal.discovery` | `ComponentFactory`, `Annotations`, `SpringTypes` | finding components, scope and constructor rules (SG004, SG005), reading Spring annotations by name |
+| `internal.resolution` | `DependencyResolver`, `BoundaryUsage` | ordered rules for one parameter (SG006, SG008); start here for resolution changes |
+| `internal.findings` | `BoundaryChecker`, `ResolutionReporter`, `DependencyPaths`, `CycleDetector`, `TextSimilarity` | SG001, SG003, SG007, SG009 |
+| `internal.report` | `GraphReport` | report text |
+| `internal.model` | `Component`, `Dependency`, `Resolution` | graph model |
+| `internal.diagnostic` | `Diagnostics`, `Code` | severity rules and diagnostic codes |
 
 ## Output snapshots
 

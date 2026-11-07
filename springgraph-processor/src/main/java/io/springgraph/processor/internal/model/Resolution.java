@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.model;
 
 /** How a constructor dependency was classified. Only {@link #STATIC} counts as statically validated. */
-enum Resolution {
+public enum Resolution {
     /** Exactly one unconditional component satisfies the dependency. */
     STATIC,
     /** No component satisfies it, and the type is a declared runtime boundary. */
@@ -35,7 +35,7 @@ enum Resolution {
     /** The processor does not model the resolution semantics (SG006/SG008); not validated, never guessed. */
     UNSUPPORTED;
 
-    boolean isValidated() {
+    public boolean isValidated() {
         return this == STATIC;
     }
 }

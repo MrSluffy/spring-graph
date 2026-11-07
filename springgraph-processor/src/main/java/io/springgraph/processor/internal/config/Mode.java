@@ -13,30 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.config;
 
 import java.util.Locale;
 import javax.tools.Diagnostic;
 
 /** Validation policy, selected with {@code -Aspringgraph.mode}. */
-enum Mode {
+public enum Mode {
     /** Findings are warnings; the build always passes. Missing bindings are suspected, not proven. */
     ADVISORY,
     /** Findings are errors; the module is treated as a closed static boundary. */
     STRICT;
 
     /** Severity used for findings whose severity depends on the mode. */
-    Diagnostic.Kind findingKind() {
+    public Diagnostic.Kind findingKind() {
         return this == STRICT ? Diagnostic.Kind.ERROR : Diagnostic.Kind.WARNING;
     }
 
     /** The option value, e.g. "strict". */
-    String label() {
+    public String label() {
         return name().toLowerCase(Locale.ROOT);
     }
 
     /** Parses an option value, ignoring case and surrounding whitespace; null if it is not a valid mode. */
-    static Mode parse(String value) {
+    public static Mode parse(String value) {
         for (Mode mode : values()) {
             if (mode.name().equalsIgnoreCase(value.trim())) {
                 return mode;

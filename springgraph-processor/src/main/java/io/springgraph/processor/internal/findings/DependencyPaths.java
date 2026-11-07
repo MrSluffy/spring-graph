@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.findings;
 
+import io.springgraph.processor.internal.model.Component;
+import io.springgraph.processor.internal.model.Dependency;
+import io.springgraph.processor.internal.model.Resolution;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -28,12 +31,12 @@ import java.util.TreeSet;
  * Renders the dependency path from a root component down to a requested type, following statically resolved edges
  * upwards. When a component has several dependents, the first in name order is used, so output is deterministic.
  */
-final class DependencyPaths {
+public final class DependencyPaths {
 
     /** Component name to the names of components that statically depend on it. */
     private final Map<String, SortedSet<String>> dependents = new TreeMap<>();
 
-    DependencyPaths(Map<String, Component> graph) {
+    public DependencyPaths(Map<String, Component> graph) {
         for (Component component : graph.values()) {
             for (Dependency dependency : component.dependencies()) {
                 if (dependency.resolution() == Resolution.STATIC) {
@@ -53,7 +56,7 @@ final class DependencyPaths {
      *       -> PaymentGateway
      * </pre>
      */
-    String render(String from, String requestedType) {
+    public String render(String from, String requestedType) {
         Deque<String> chain = new ArrayDeque<>();
         Set<String> seen = new HashSet<>();
         for (String current = from; current != null && seen.add(current); current = firstDependent(current)) {

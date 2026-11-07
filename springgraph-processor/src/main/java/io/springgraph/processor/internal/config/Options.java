@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.config;
 
+import io.springgraph.processor.SpringGraphProcessor;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedSet;
@@ -27,13 +28,13 @@ import java.util.function.Consumer;
  * @param mode       validation policy
  * @param boundaries declared runtime boundary types, sorted so diagnostics are deterministic
  */
-record Options(Mode mode, SortedSet<String> boundaries) {
+public record Options(Mode mode, SortedSet<String> boundaries) {
 
     /**
      * Parses the javac options. Returns null when the processor is not enabled (no mode option) or the mode is invalid;
      * an invalid mode is reported through {@code onError}.
      */
-    static Options parse(Map<String, String> javacOptions, Consumer<String> onError) {
+    public static Options parse(Map<String, String> javacOptions, Consumer<String> onError) {
         String rawMode = javacOptions.get(SpringGraphProcessor.OPT_MODE);
         if (rawMode == null) {
             return null;

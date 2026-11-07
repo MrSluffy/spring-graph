@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.discovery;
 
 import java.util.Map;
 import java.util.Set;
@@ -24,18 +24,18 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** Reads Spring annotations from compiler elements, by annotation name. */
-final class Annotations {
+public final class Annotations {
 
     private static final String DEFAULT_SCOPE = "singleton";
 
     private Annotations() {}
 
-    static boolean has(Element element, String annotationName) {
+    public static boolean has(Element element, String annotationName) {
         return find(element, annotationName) != null;
     }
 
     /** The annotation with the given qualified name directly on the element, or null. */
-    static AnnotationMirror find(Element element, String annotationName) {
+    public static AnnotationMirror find(Element element, String annotationName) {
         for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
             if (typeOf(mirror).getQualifiedName().contentEquals(annotationName)) {
                 return mirror;
@@ -48,7 +48,7 @@ final class Annotations {
      * Returns e.g. "@Profile" when the element carries {@code @Conditional} directly or an annotation that is itself
      * meta-annotated with {@code @Conditional} (covers {@code @Profile} and Boot's {@code @ConditionalOnX}); otherwise null.
      */
-    static String conditionalMarker(Element element) {
+    public static String conditionalMarker(Element element) {
         for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
             TypeElement annotationType = typeOf(mirror);
             if (annotationType.getQualifiedName().contentEquals(SpringTypes.CONDITIONAL)
@@ -60,7 +60,7 @@ final class Annotations {
     }
 
     /** The {@code @Scope} name, "singleton" for {@code @Scope} without a value, or null without {@code @Scope}. */
-    static String scope(Element element) {
+    public static String scope(Element element) {
         AnnotationMirror scope = find(element, SpringTypes.SCOPE);
         if (scope == null) {
             return null;
@@ -69,7 +69,7 @@ final class Annotations {
         return name != null ? name : DEFAULT_SCOPE;
     }
 
-    static boolean isSingletonScope(String scope) {
+    public static boolean isSingletonScope(String scope) {
         return scope == null || DEFAULT_SCOPE.equals(scope);
     }
 
@@ -78,7 +78,7 @@ final class Annotations {
      * class name with {@link java.beans.Introspector#decapitalize} rules (as AnnotationBeanNameGenerator). Nested classes
      * use "Outer.Inner", as Spring does.
      */
-    static String beanName(TypeElement type) {
+    public static String beanName(TypeElement type) {
         for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
             if (SpringTypes.STEREOTYPES.contains(
                     typeOf(mirror).getQualifiedName().toString())) {

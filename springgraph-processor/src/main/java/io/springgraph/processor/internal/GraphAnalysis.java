@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal;
 
+import io.springgraph.processor.SpringGraphProcessor;
+import io.springgraph.processor.internal.config.Options;
+import io.springgraph.processor.internal.diagnostic.Code;
+import io.springgraph.processor.internal.diagnostic.Diagnostics;
+import io.springgraph.processor.internal.discovery.Annotations;
+import io.springgraph.processor.internal.discovery.ComponentFactory;
+import io.springgraph.processor.internal.discovery.SpringTypes;
+import io.springgraph.processor.internal.findings.BoundaryChecker;
+import io.springgraph.processor.internal.findings.ResolutionReporter;
+import io.springgraph.processor.internal.model.Component;
+import io.springgraph.processor.internal.report.GraphReport;
+import io.springgraph.processor.internal.resolution.BoundaryUsage;
+import io.springgraph.processor.internal.resolution.DependencyResolver;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
@@ -40,20 +53,20 @@ import javax.tools.StandardLocation;
  *   <li>write the report, with a note when coverage is low.</li>
  * </ol>
  */
-final class GraphAnalysis {
+public final class GraphAnalysis {
 
     private final ProcessingEnvironment env;
     private final Options options;
     private final Diagnostics diagnostics;
 
-    GraphAnalysis(ProcessingEnvironment env, Options options) {
+    public GraphAnalysis(ProcessingEnvironment env, Options options) {
         this.env = env;
         this.options = options;
         this.diagnostics = new Diagnostics(env.getMessager(), options.mode());
     }
 
     /** @param candidateNames qualified names of stereotype and {@code @Configuration} classes collected over all rounds */
-    void run(Set<String> candidateNames) {
+    public void run(Set<String> candidateNames) {
         Map<String, Component> graph = new TreeMap<>();
         SortedSet<String> configurationClasses = new TreeSet<>();
         discover(candidateNames, graph, configurationClasses);

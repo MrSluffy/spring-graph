@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.findings;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.Set;
  * is first found, starting at the node where the search re-entered it. Two cycles are the same when one is a rotation of the
  * other.
  */
-final class CycleDetector {
+public final class CycleDetector {
 
     private final Map<String, List<String>> edges;
     private final Set<String> finished = new HashSet<>();
@@ -42,7 +42,7 @@ final class CycleDetector {
     }
 
     /** @param edges node to its successors; iterate in a deterministic order (e.g. a TreeMap) for deterministic results */
-    static List<List<String>> findCycles(Map<String, List<String>> edges) {
+    public static List<List<String>> findCycles(Map<String, List<String>> edges) {
         CycleDetector detector = new CycleDetector(edges);
         for (String start : edges.keySet()) {
             detector.visit(start, new ArrayDeque<>(), new HashSet<>());

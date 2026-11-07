@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.springgraph.processor;
+package io.springgraph.processor.internal.model;
 
 import java.util.List;
 import javax.lang.model.element.VariableElement;
@@ -27,18 +27,18 @@ import javax.lang.model.element.VariableElement;
  * @param targets    the resolved component for {@link Resolution#STATIC}, the candidates for {@link Resolution#AMBIGUOUS},
  *                   otherwise empty; component names in sorted order
  */
-record Dependency(VariableElement parameter, String type, Resolution resolution, List<String> targets) {
+public record Dependency(VariableElement parameter, String type, Resolution resolution, List<String> targets) {
 
-    Dependency {
+    public Dependency {
         targets = List.copyOf(targets);
     }
 
-    static Dependency of(VariableElement parameter, String type, Resolution resolution) {
+    public static Dependency of(VariableElement parameter, String type, Resolution resolution) {
         return new Dependency(parameter, type, resolution, List.of());
     }
 
     /** The resolved component name; only valid for {@link Resolution#STATIC}. */
-    String target() {
+    public String target() {
         if (resolution != Resolution.STATIC) {
             throw new IllegalStateException("No single target for " + resolution);
         }
