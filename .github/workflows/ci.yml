@@ -80,6 +80,10 @@ jobs:
       - name: Publish processor to Maven local
         run: ./gradlew :springgraph-processor:publishToMavenLocal --console=plain
 
+      # The Maven steps below consume exactly the version just published (single source: gradle.properties).
+      - name: Read project version
+        run: echo "SG_VERSION=$(sed -n 's/^version=//p' gradle.properties)" >> "$GITHUB_ENV"
+
       # Java 17, the oldest supported consumer JDK, for every Maven step below (sets JAVA_HOME and PATH).
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -93,7 +97,7 @@ jobs:
           mvn -B -ntp --version | tee maven-version.txt
           grep -q 'Java version: 17\.' maven-version.txt || { echo "::error::Maven is not running on Java 17"; exit 1; }
           rm maven-version.txt
-          mvn -B -ntp clean compile
+          mvn -B -ntp clean compile -Dspringgraph.version="$SG_VERSION"
           grep -q "Coverage: 3 of 3 dependencies statically validated" target/classes/META-INF/springgraph/graph.txt
 
       - name: Seeded missing binding fails the build with SG001
@@ -103,7 +107,7 @@ jobs:
           mkdir -p src/main/java/seed
           echo 'package seed; public interface Notifier {}' > src/main/java/seed/Notifier.java
           echo 'package seed; @org.springframework.stereotype.Service @lombok.RequiredArgsConstructor public class NotifyService { private final Notifier notifier; }' > src/main/java/seed/NotifyService.java
-          if mvn -B -ntp clean compile > build.log 2>&1; then
+          if mvn -B -ntp clean compile -Dspringgraph.version="$SG_VERSION" > build.log 2>&1; then
             cat build.log
             echo "::error::Expected the build to fail with SG001"
             exit 1
@@ -118,7 +122,7 @@ jobs:
           mkdir -p src/main/java/seed
           echo 'package seed; public interface Notifier {}' > src/main/java/seed/Notifier.java
           echo 'package seed; @org.springframework.stereotype.Service @lombok.RequiredArgsConstructor public class NotifyService { private final Notifier notifier; }' > src/main/java/seed/NotifyService.java
-          mvn -B -ntp clean compile -Dsg.mode=advisory | tee build.log
+          mvn -B -ntp clean compile -Dspringgraph.version="$SG_VERSION" -Dsg.mode=advisory | tee build.log
           grep "WARNING.*SG001" build.log
           rm -rf src/main/java/seed build.log
 

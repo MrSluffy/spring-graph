@@ -14,6 +14,7 @@ pom-reversed.xml
 # Local evaluation and maintenance scripts (not published)
 /tools/
 /docs/releasing.md
+/scripts/
 
 # Temporary files created by those scripts (normally removed by them)
 examples/maven-lombok/lombok.config

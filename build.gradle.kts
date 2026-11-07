@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = "io.springgraph"
-    version = "0.1.0"
+    // version comes from gradle.properties (set it with scripts/set-version.sh)
     repositories { mavenCentral() }
 }
 
