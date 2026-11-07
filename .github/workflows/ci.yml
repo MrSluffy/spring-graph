@@ -32,6 +32,11 @@ jobs:
       # Also validates the Gradle wrapper checksum.
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
+      # The repository may record gradlew without the executable bit (committed from Windows).
+      - name: Make Gradle wrapper executable
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
       # Compiler tests, Spring-agreement tests, construction experiment, and the examples
       # (compiled with the processor in strict mode, plus the pilot's context-startup test).
       - name: Build and test
@@ -63,6 +68,9 @@ jobs:
           cache: maven
 
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
 
       - name: Publish processor to Maven local
         run: ./gradlew :springgraph-processor:publishToMavenLocal --console=plain
@@ -116,6 +124,9 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
 
       # Java (palantir-java-format + Apache header), Gradle Kotlin scripts (ktlint), docs and config whitespace.
       # Fix locally with: ./gradlew spotlessApply
