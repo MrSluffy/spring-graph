@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- `@Qualifier("name")` on constructor parameters is resolved as Spring does: a candidate matches by its class-level
+  `@Qualifier` value (also inherited from a superclass) or by its bean name. A qualifier without a match is SG001 with a hint.
+- `@Primary` is resolved: a unique `@Primary` candidate is validated, several are SG007. `@Fallback` (Spring 6.2+): a unique
+  non-fallback candidate is validated.
+- A component is not its own candidate while another one exists, matching Spring. Fixes false SG007 and SG003 findings for the
+  decorator pattern.
+- `@Named` and custom qualifier annotations on parameters are now reported as SG008. Previously they were ignored, which could
+  produce a false SG007.
+- The report shows the parameter's qualifier and why a candidate was chosen (`[validated via @Primary]`).
+- Still not validated: several candidates matching one qualifier, `@Priority`, `@Named`-named candidates.
+- Release pipeline: GitHub Packages now also receives the Gradle module metadata and the signatures.
+
 ## 0.1.0 (experimental), 2026-11-07
 
 First experimental validation-only release. Local publication only (`publishToMavenLocal`).

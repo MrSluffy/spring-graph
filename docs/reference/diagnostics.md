@@ -47,7 +47,9 @@ The processor will not guess. The dependency is reported as not validated when:
 
 - the parameter type is generic, or a collection, `Map`, `Optional`, `ObjectProvider`, `ObjectFactory` or `Provider`;
 - the parameter has `@Lazy`;
-- several candidates exist and one is `@Primary`;
+- several candidates match the parameter's `@Qualifier` (Spring then chooses by bean name);
+- several candidates are left after `@Primary` and `@Fallback`, and one of them has `@Priority`;
+- several candidates exist and one is named by `@Named` or `@ManagedBean`;
 - a candidate has `@Profile` or a `@Conditional*` annotation (directly or via meta-annotation). Declare the type a runtime
   boundary if Spring supplies it in every environment you care about;
 - several candidates exist and the parameter name equals exactly one candidate's bean name. Spring picks that bean only if the code
@@ -56,14 +58,29 @@ The processor will not guess. The dependency is reported as not validated when:
 
 ## SG007: Ambiguous binding
 
-Several unconditional components implement the requested type, none is `@Primary`, and no parameter-name match applies.
-The message lists the candidates. A common cause with Lombok: a field `@Qualifier` is not copied to the generated constructor
-unless `lombok.config` contains `lombok.copyableAnnotations += org.springframework.beans.factory.annotation.Qualifier`.
+Spring cannot choose a single bean. Either several unconditional components match and none of Spring's tie-breakers
+applies (no single `@Primary`, no single non-`@Fallback` candidate, no parameter-name match), or **more than one candidate is
+`@Primary`**. The message lists the candidates.
+
+A component never counts as a candidate for its own constructor while another candidate exists, so a decorator
+(`CachingGateway implements Gateway` with a `Gateway` constructor parameter) does not make its own dependency ambiguous.
+Its users still see two candidates unless one is `@Primary`.
+
+A common cause with Lombok: a field `@Qualifier` is not copied to the generated constructor unless `lombok.config` contains
+`lombok.copyableAnnotations += org.springframework.beans.factory.annotation.Qualifier`.
 
 ## SG008: Unsupported qualifier
 
-The constructor parameter carries `@Qualifier`. Qualifier matching is not implemented in 0.1.0, so the dependency is not
-validated.
+`@Qualifier("name")` on a constructor parameter is supported: candidates are filtered the way Spring does, by their
+class-level `@Qualifier` value or their bean name (unreleased; in 0.1.0 every `@Qualifier` was SG008). SG008 remains for
+qualifiers the processor does not evaluate:
+
+- `@Qualifier` without a value;
+- `@Named` (JSR-330) or a custom annotation meta-annotated with `@Qualifier` on the parameter;
+- a candidate whose bean name or qualifier comes from `@Named`, `@ManagedBean` or a custom qualifier annotation.
+
+When a qualifier matches no candidate, the result is SG001 with a hint to check the qualifier, or the declared runtime
+boundary for that type.
 
 ## SG009: Configuration problem
 

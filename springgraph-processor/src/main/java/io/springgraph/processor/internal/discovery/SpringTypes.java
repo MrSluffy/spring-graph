@@ -30,6 +30,23 @@ public final class SpringTypes {
     public static final String PRIMARY = "org.springframework.context.annotation.Primary";
     public static final String VALUE = "org.springframework.beans.factory.annotation.Value";
     public static final String QUALIFIER = "org.springframework.beans.factory.annotation.Qualifier";
+    /** Spring 6.2+: a candidate that only wins when no other candidate is left. */
+    public static final String FALLBACK = "org.springframework.context.annotation.Fallback";
+
+    /** Annotations Spring also treats as qualifiers (JSR-330), and the meta-annotations that mark custom qualifiers. */
+    public static final Set<String> QUALIFIER_META_ANNOTATIONS =
+            Set.of(QUALIFIER, "jakarta.inject.Qualifier", "javax.inject.Qualifier");
+
+    /** Annotations that can also set a component's bean name (AnnotationBeanNameGenerator). */
+    public static final Set<String> BEAN_NAME_ANNOTATIONS = Set.of(
+            "jakarta.inject.Named",
+            "javax.inject.Named",
+            "jakarta.annotation.ManagedBean",
+            "javax.annotation.ManagedBean");
+
+    /** Candidate ordering for single injection after primary, fallback and name matching. */
+    public static final Set<String> PRIORITY = Set.of("jakarta.annotation.Priority", "javax.annotation.Priority");
+
     public static final String SPRING_DATA_REPOSITORY = "org.springframework.data.repository.Repository";
     public static final String NO_REPOSITORY_BEAN = "org.springframework.data.repository.NoRepositoryBean";
 

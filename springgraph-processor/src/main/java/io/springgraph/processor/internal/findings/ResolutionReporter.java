@@ -53,9 +53,7 @@ public final class ResolutionReporter {
                         diagnostics.finding(
                                 Code.SG007,
                                 dependency.parameter(),
-                                "Ambiguous binding for " + dependency.type() + ". Candidates: "
-                                        + String.join(", ", dependency.targets()) + ".\n\nDependency path:\n"
-                                        + paths.render(component.name(), dependency.type()));
+                                ambiguousMessage(dependency, paths.render(component.name(), dependency.type())));
                     default -> {}
                 }
             }
@@ -84,14 +82,27 @@ public final class ResolutionReporter {
         }
     }
 
+    private static String ambiguousMessage(Dependency dependency, String path) {
+        String what = "@Primary".equals(dependency.reason())
+                ? ": more than one candidate is @Primary"
+                : (dependency.qualifier() != null ? " with @Qualifier(\"" + dependency.qualifier() + "\")" : "");
+        return "Ambiguous binding for " + dependency.type() + what + ". Candidates: "
+                + String.join(", ", dependency.targets()) + ".\n\nDependency path:\n" + path;
+    }
+
     private String missingMessage(Dependency dependency, String path) {
         String policy = diagnostics.mode() == Mode.STRICT
                 ? "This dependency is inside a closed static boundary."
                 : "Advisory mode: this is a suspected missing binding, not a proven error.";
-        return "No static binding found for " + dependency.type() + ".\n\n"
+        String qualified = dependency.qualifier() != null ? " with @Qualifier(\"" + dependency.qualifier() + "\")" : "";
+        String qualifierFix = dependency.qualifier() != null
+                ? "  - Check the qualifier: it must equal a candidate's bean name or its class-level @Qualifier value.\n"
+                : "";
+        return "No static binding found for " + dependency.type() + qualified + ".\n\n"
                 + "Dependency path:\n" + path + "\n\n"
                 + "Graph policy:\n  " + policy + "\n\n"
                 + "Possible fixes:\n"
+                + qualifierFix
                 + "  - Add a supported implementation.\n"
                 + "  - Include an existing component in the graph.\n"
                 + "  - Declare a runtime boundary (-A" + SpringGraphProcessor.OPT_BOUNDARIES + "=" + dependency.type()

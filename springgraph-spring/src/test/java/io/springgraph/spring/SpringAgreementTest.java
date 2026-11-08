@@ -198,6 +198,204 @@ class SpringAgreementTest {
         assertAgreement(o, Set.of("SG007"), "NoUniqueBeanDefinitionException");
     }
 
+    // ------------------------------------------------------------------ qualifiers, @Primary, @Fallback,
+    // self-exclusion
+
+    private static final String SENDER = "package seed; public interface Sender {}";
+
+    private static String component(String name, String annotations, String body) {
+        return "package seed; @org.springframework.stereotype.Component " + annotations + " public class " + name
+                + " implements Sender " + body;
+    }
+
+    private static String user(String parameter) {
+        return "package seed; @org.springframework.stereotype.Service public class User { public User(" + parameter
+                + ") {} }";
+    }
+
+    private static final String Q = "@org.springframework.beans.factory.annotation.Qualifier";
+    private static final String PRIMARY = "@org.springframework.context.annotation.Primary";
+    private static final String FALLBACK = "@org.springframework.context.annotation.Fallback";
+
+    @Test
+    void qualifierMatchesBeanName() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", "", "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"smsSender\") Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void qualifierMatchesClassLevelQualifier() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", Q + "(\"sms\")", "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"sms\") Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void qualifierFallsBackToBeanNameEvenWithADifferentClassQualifier() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", Q + "(\"sms\")", "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"smsSender\") Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void classQualifierIsInheritedFromSuperclass() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.BaseSender",
+                "package seed; " + Q + "(\"base\") public abstract class BaseSender implements Sender {}",
+                "seed.SmsSender",
+                "package seed; @org.springframework.stereotype.Component public class SmsSender extends BaseSender {}",
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"base\") Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void qualifierWithoutMatchingCandidate() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", "", "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"fax\") Sender sender"));
+        assertAgreement(o, Set.of("SG001"), "NoSuchBeanDefinitionException");
+    }
+
+    @Test
+    void qualifierSelectsANonPrimaryCandidate() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", PRIMARY, "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user(Q + "(\"mailSender\") Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void uniquePrimaryWins() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", PRIMARY, "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user("Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void severalPrimariesAreAmbiguous() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", PRIMARY, "{}"),
+                "seed.MailSender",
+                component("MailSender", PRIMARY, "{}"),
+                "seed.User",
+                user("Sender sender"));
+        assertAgreement(o, Set.of("SG007"), "NoUniqueBeanDefinitionException");
+    }
+
+    @Test
+    void uniqueNonFallbackWins() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", FALLBACK, "{}"),
+                "seed.MailSender",
+                component("MailSender", "", "{}"),
+                "seed.User",
+                user("Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void decoratorWithPrimaryResolvesItsDelegateAndItsUsers() {
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", "", "{}"),
+                "seed.CachingSender",
+                component("CachingSender", PRIMARY, "{ public CachingSender(Sender delegate) {} }"),
+                "seed.User",
+                user("Sender sender"));
+        assertAgreement(o, Set.of(), STARTED);
+    }
+
+    @Test
+    void decoratorWithoutPrimaryIsAmbiguousOnlyForItsUsers() {
+        // The decorator's own dependency excludes itself, so only User is ambiguous.
+        Outcome o = run(
+                false,
+                false,
+                "seed.Sender",
+                SENDER,
+                "seed.SmsSender",
+                component("SmsSender", "", "{}"),
+                "seed.CachingSender",
+                component("CachingSender", "", "{ public CachingSender(Sender delegate) {} }"),
+                "seed.User",
+                user("Sender sender"));
+        assertAgreement(o, Set.of("SG007"), "NoUniqueBeanDefinitionException");
+    }
+
     // ------------------------------------------------------------------ harness
 
     private static void assertAgreement(Outcome actual, Set<String> expectedCodes, String expectedSpring) {
@@ -277,7 +475,7 @@ class SpringAgreementTest {
             }
             for (String name : classNames) {
                 Class<?> type = loader.loadClass(name);
-                if (!type.isInterface()) {
+                if (!type.isInterface() && !java.lang.reflect.Modifier.isAbstract(type.getModifiers())) {
                     ctx.register(type);
                 }
             }

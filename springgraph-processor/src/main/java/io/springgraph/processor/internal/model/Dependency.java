@@ -26,15 +26,39 @@ import javax.lang.model.element.VariableElement;
  * @param resolution classification
  * @param targets    the resolved component for {@link Resolution#STATIC}, the candidates for {@link Resolution#AMBIGUOUS},
  *                   otherwise empty; component names in sorted order
+ * @param qualifier  the parameter's {@code @Qualifier} value, or null
+ * @param reason     why this result: for {@link Resolution#STATIC} the rule that chose the target ("@Qualifier",
+ *                   "@Primary", "@Fallback"); for {@link Resolution#AMBIGUOUS} "@Primary" when several candidates are
+ *                   primary; otherwise null
  */
-public record Dependency(VariableElement parameter, String type, Resolution resolution, List<String> targets) {
+public record Dependency(
+        VariableElement parameter,
+        String type,
+        Resolution resolution,
+        List<String> targets,
+        String qualifier,
+        String reason) {
 
     public Dependency {
         targets = List.copyOf(targets);
     }
 
     public static Dependency of(VariableElement parameter, String type, Resolution resolution) {
-        return new Dependency(parameter, type, resolution, List.of());
+        return new Dependency(parameter, type, resolution, List.of(), null, null);
+    }
+
+    public static Dependency of(VariableElement parameter, String type, Resolution resolution, String qualifier) {
+        return new Dependency(parameter, type, resolution, List.of(), qualifier, null);
+    }
+
+    public static Dependency resolved(
+            VariableElement parameter, String type, String target, String qualifier, String reason) {
+        return new Dependency(parameter, type, Resolution.STATIC, List.of(target), qualifier, reason);
+    }
+
+    public static Dependency ambiguous(
+            VariableElement parameter, String type, List<String> candidates, String qualifier, String reason) {
+        return new Dependency(parameter, type, Resolution.AMBIGUOUS, candidates, qualifier, reason);
     }
 
     /** The resolved component name; only valid for {@link Resolution#STATIC}. */

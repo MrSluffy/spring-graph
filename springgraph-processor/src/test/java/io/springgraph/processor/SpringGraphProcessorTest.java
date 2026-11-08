@@ -178,12 +178,223 @@ class SpringGraphProcessorTest {
                 import org.springframework.beans.factory.annotation.Qualifier;
                 import org.springframework.stereotype.Service;
                 @Service public class Svc {
-                    public Svc(List<PaymentGateway> all, @Qualifier("x") PaymentGateway one) {}
+                    public Svc(List<PaymentGateway> all, @Qualifier PaymentGateway one) {}
                 }
                 """);
         Compilation c = compile("strict", null, GATEWAY, DEFAULT_GATEWAY, svc);
         assertThat(c).hadErrorContaining("SG006");
+        assertThat(c).hadErrorContaining("@Qualifier without a value");
+    }
+
+    // ------------------------------------------------------------------ qualifiers, @Primary, @Fallback
+
+    private static final JavaFileObject JSR330_QUALIFIER =
+            src("jakarta.inject.Qualifier", "package jakarta.inject; public @interface Qualifier {}");
+    private static final JavaFileObject JSR330_NAMED = src("jakarta.inject.Named", """
+            package jakarta.inject;
+            @Qualifier public @interface Named { String value() default ""; }
+            """);
+    private static final JavaFileObject PRIORITY = src(
+            "jakarta.annotation.Priority", "package jakarta.annotation; public @interface Priority { int value(); }");
+
+    private static JavaFileObject gateway(String name, String annotations) {
+        return src("p." + name, """
+                package p;
+                @org.springframework.stereotype.Component %s public class %s implements PaymentGateway {}
+                """.formatted(annotations, name));
+    }
+
+    private static JavaFileObject consumer(String parameter) {
+        return src("p.Consumer", """
+                package p;
+                @org.springframework.stereotype.Service public class Consumer { public Consumer(%s) {} }
+                """.formatted(parameter));
+    }
+
+    private static final String Q = "@org.springframework.beans.factory.annotation.Qualifier";
+
+    @Test
+    void qualifierByBeanNameIsValidatedAndShownInTheReport() throws IOException {
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", ""),
+                gateway("CashGateway", ""),
+                consumer(Q + "(\"cashGateway\") PaymentGateway g"));
+        assertThat(c).succeeded();
+        assertTrue(
+                report(c)
+                        .contains(
+                                "p.PaymentGateway @Qualifier(\"cashGateway\") -> p.CashGateway [validated via @Qualifier]"),
+                report(c));
+    }
+
+    @Test
+    void qualifierWithoutMatchIsMissingWithAQualifierHint() {
+        Compilation c = compile(
+                "strict", null, GATEWAY, gateway("CardGateway", ""), consumer(Q + "(\"cash\") PaymentGateway g"));
+        assertThat(c)
+                .hadErrorContaining("SG001: No static binding found for p.PaymentGateway with @Qualifier(\"cash\")");
+        assertThat(c).hadErrorContaining("Check the qualifier");
+    }
+
+    @Test
+    void qualifierMatchingSeveralCandidatesIsNotValidated() {
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", Q + "(\"x\")"),
+                gateway("CashGateway", Q + "(\"x\")"),
+                consumer(Q + "(\"x\") PaymentGateway g"));
+        assertThat(c).hadErrorContaining("SG006");
+        assertTrue(c.errors().stream().noneMatch(d -> d.getMessage(null).contains("SG007")));
+    }
+
+    @Test
+    void namedParameterIsUnsupported() {
+        Compilation c = compile(
+                "strict",
+                null,
+                JSR330_QUALIFIER,
+                JSR330_NAMED,
+                GATEWAY,
+                gateway("CardGateway", ""),
+                gateway("CashGateway", ""),
+                consumer("@jakarta.inject.Named(\"cashGateway\") PaymentGateway g"));
+        // Before qualifier support this was silently ignored and reported as ambiguous.
+        assertThat(c).hadErrorContaining("SG008: @Named on 'g' is not supported");
+        assertTrue(c.errors().stream().noneMatch(d -> d.getMessage(null).contains("SG007")));
+    }
+
+    @Test
+    void customQualifierAnnotationOnParameterIsUnsupported() {
+        JavaFileObject fast = src("p.Fast", "package p; " + Q + " public @interface Fast {}");
+        Compilation c = compile(
+                "strict", null, fast, GATEWAY, gateway("CardGateway", "@p.Fast"), consumer("@p.Fast PaymentGateway g"));
+        assertThat(c).hadErrorContaining("SG008: @Fast on 'g' is not supported");
+    }
+
+    @Test
+    void qualifierAgainstACandidateNamedByNamedIsUnsupported() {
+        Compilation c = compile(
+                "strict",
+                null,
+                JSR330_QUALIFIER,
+                JSR330_NAMED,
+                GATEWAY,
+                gateway("CardGateway", "@jakarta.inject.Named(\"card\")"),
+                consumer(Q + "(\"card\") PaymentGateway g"));
         assertThat(c).hadErrorContaining("SG008");
+        assertThat(c).hadErrorContaining("cannot be evaluated against p.CardGateway");
+    }
+
+    @Test
+    void uniquePrimaryIsValidatedViaPrimary() throws IOException {
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", "@org.springframework.context.annotation.Primary"),
+                gateway("CashGateway", ""),
+                consumer("PaymentGateway g"));
+        assertThat(c).succeeded();
+        assertTrue(report(c).contains("p.PaymentGateway -> p.CardGateway [validated via @Primary]"), report(c));
+    }
+
+    @Test
+    void metaAnnotatedPrimaryCounts() {
+        JavaFileObject preferred = src(
+                "p.Preferred",
+                "package p; @org.springframework.context.annotation.Primary public @interface Preferred {}");
+        Compilation c = compile(
+                "strict",
+                null,
+                preferred,
+                GATEWAY,
+                gateway("CardGateway", "@p.Preferred"),
+                gateway("CashGateway", ""),
+                consumer("PaymentGateway g"));
+        assertThat(c).succeeded();
+    }
+
+    @Test
+    void severalPrimariesAreAmbiguous() {
+        String primary = "@org.springframework.context.annotation.Primary";
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", primary),
+                gateway("CashGateway", primary),
+                consumer("PaymentGateway g"));
+        assertThat(c)
+                .hadErrorContaining(
+                        "SG007: Ambiguous binding for p.PaymentGateway: more than one candidate is @Primary");
+    }
+
+    @Test
+    void uniqueNonFallbackIsValidatedViaFallback() throws IOException {
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", "@org.springframework.context.annotation.Fallback"),
+                gateway("CashGateway", ""),
+                consumer("PaymentGateway g"));
+        assertThat(c).succeeded();
+        assertTrue(report(c).contains("p.PaymentGateway -> p.CashGateway [validated via @Fallback]"), report(c));
+    }
+
+    @Test
+    void allFallbacksStayAmbiguous() {
+        String fallback = "@org.springframework.context.annotation.Fallback";
+        Compilation c = compile(
+                "strict",
+                null,
+                GATEWAY,
+                gateway("CardGateway", fallback),
+                gateway("CashGateway", fallback),
+                consumer("PaymentGateway g"));
+        assertThat(c).hadErrorContaining("SG007");
+    }
+
+    @Test
+    void priorityAmongCandidatesIsUnsupported() {
+        Compilation c = compile(
+                "strict",
+                null,
+                PRIORITY,
+                GATEWAY,
+                gateway("CardGateway", "@jakarta.annotation.Priority(1)"),
+                gateway("CashGateway", ""),
+                consumer("PaymentGateway g"));
+        assertThat(c).hadErrorContaining("SG006: @Priority among candidates");
+    }
+
+    @Test
+    void decoratorExcludesItselfFromItsOwnCandidates() throws IOException {
+        JavaFileObject caching = src("p.CachingGateway", """
+                package p;
+                @org.springframework.stereotype.Component @org.springframework.context.annotation.Primary
+                public class CachingGateway implements PaymentGateway { public CachingGateway(PaymentGateway delegate) {} }
+                """);
+        Compilation c = compile("strict", null, GATEWAY, DEFAULT_GATEWAY, caching, consumer("PaymentGateway g"));
+        assertThat(c).succeeded();
+        String r = report(c);
+        assertTrue(r.contains("p.CachingGateway\n  p.PaymentGateway -> p.DefaultPaymentGateway [validated]"), r);
+        assertTrue(r.contains("p.Consumer\n  p.PaymentGateway -> p.CachingGateway [validated via @Primary]"), r);
+    }
+
+    @Test
+    void selfAsOnlyCandidateIsACycle() {
+        JavaFileObject self = src("p.SelfGateway", """
+                package p;
+                @org.springframework.stereotype.Component
+                public class SelfGateway implements PaymentGateway { public SelfGateway(PaymentGateway self) {} }
+                """);
+        assertThat(compile("strict", null, GATEWAY, self)).hadErrorContaining("SG003");
     }
 
     // Regression: found by the pilot app. @Value String parameters are not bean dependencies.
