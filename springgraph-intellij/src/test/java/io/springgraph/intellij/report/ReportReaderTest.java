@@ -92,6 +92,20 @@ public class ReportReaderTest {
     }
 
     @Test
+    public void refusesOversizedFilesWithoutParsingThem() throws IOException {
+        java.nio.file.Path file = java.nio.file.Files.createTempFile("graph", ".json");
+        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file.toFile(), "rw")) {
+            raf.setLength(ReportReader.MAX_BYTES + 1); // sparse: not valid JSON, which must not matter
+        }
+        try {
+            IOException ex = assertThrows(IOException.class, () -> ReportReader.read(file));
+            assertTrue(ex.getMessage(), ex.getMessage().contains("limit"));
+        } finally {
+            java.nio.file.Files.delete(file);
+        }
+    }
+
+    @Test
     public void rejectsInvalidJson() {
         assertThrows(IOException.class, () -> ReportReader.read(new StringReader("{not json")));
         assertThrows(IOException.class, () -> ReportReader.read(new StringReader("")));

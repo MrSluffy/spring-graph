@@ -50,3 +50,5 @@ bin/
 Thumbs.db
 desktop.ini
 tools
+*.crt
+*.pem

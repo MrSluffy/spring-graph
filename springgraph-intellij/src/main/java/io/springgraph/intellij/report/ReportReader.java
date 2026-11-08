@@ -33,7 +33,18 @@ public final class ReportReader {
 
     private ReportReader() {}
 
+    /**
+     * Reports are read from the project, also from untrusted ones, so a huge file must not be parsed into memory. A
+     * real report is a few hundred bytes per dependency: 16 MiB is tens of thousands of components.
+     */
+    static final long MAX_BYTES = 16L * 1024 * 1024;
+
     public static ReportModel read(Path file) throws IOException {
+        long size = Files.size(file);
+        if (size > MAX_BYTES) {
+            throw new IOException("the report is " + size / (1024 * 1024) + " MiB, larger than the "
+                    + MAX_BYTES / (1024 * 1024) + " MiB limit; not read");
+        }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             return read(reader);
         }

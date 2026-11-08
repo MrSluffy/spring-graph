@@ -5,7 +5,7 @@ Write Spring. Catch wiring mistakes before startup.
 SpringGraph is an annotation processor that checks a supported subset of Spring constructor injection while your code compiles.
 Spring keeps constructing your beans; SpringGraph adds nothing to the runtime.
 
-**Status: experimental (`0.x`).** Single-module Java projects. The `0.1.0-rc.3` pre-release is on Maven Central and
+**Status: experimental (`0.x`).** Single-module Java projects. The `0.1.0-rc.4` pre-release is on Maven Central and
 GitHub Packages.
 
 ```text
@@ -29,7 +29,8 @@ error: SG001: No static binding found for com.example.PaymentGateway.
 - [Evaluation](docs/evaluation/): pilot results, false positives found, build overhead
 - [Changelog](CHANGELOG.md)
 - [Release history](docs/project/release-history.md): published versions and how to install pre-releases
-- [IntelliJ plugin](docs/intellij.md): gutter icons and a tool window for the report (experimental)
+- [IntelliJ plugin](docs/intellij.md): checks the project with a bundled processor, no build changes needed; gutter
+  icons and a tool window (experimental)
 
 ## Build from source
 

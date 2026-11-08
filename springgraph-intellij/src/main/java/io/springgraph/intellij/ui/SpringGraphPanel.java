@@ -74,7 +74,8 @@ public final class SpringGraphPanel extends SimpleToolWindowPanel {
         tree.setCellRenderer(new Renderer());
         tree.getEmptyText()
                 .setText("No SpringGraph report found")
-                .appendLine("Build the project with -Aspringgraph.mode=advisory, then refresh");
+                .appendLine("Click Analyze in the toolbar to check the project with the bundled processor,")
+                .appendLine("or build it with the processor in its Gradle or Maven build");
         TreeSpeedSearch.installOn(tree);
         new DoubleClickListener() {
             @Override
@@ -131,8 +132,11 @@ public final class SpringGraphPanel extends SimpleToolWindowPanel {
         String coverage = model.coverage == null
                 ? ""
                 : ", " + model.coverage.validated + " of " + model.coverage.total + " dependencies validated";
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(
-                new Node(report.label(), model.mode + coverage, AllIcons.Nodes.Module, null));
+        DefaultMutableTreeNode node = new DefaultMutableTreeNode(new Node(
+                report.label(),
+                model.mode + coverage + (report.isIdeAnalysis() ? " (IDE analysis)" : " (build)"),
+                AllIcons.Nodes.Module,
+                null));
 
         List<ReportModel.Finding> findings = model.findings();
         DefaultMutableTreeNode findingsNode = group("Findings", findings.size());

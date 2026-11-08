@@ -18,6 +18,8 @@ package io.springgraph.intellij;
 import com.intellij.openapi.project.Project;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
+import io.springgraph.intellij.analysis.SpringGraphAnalyzer;
+import io.springgraph.intellij.settings.SpringGraphSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,5 +37,9 @@ public final class BuildFinishedListener implements ProjectTaskListener {
     @Override
     public void finished(@NotNull ProjectTaskManager.Result result) {
         SpringGraphReports.getInstance(project).reload();
+        SpringGraphSettings settings = SpringGraphSettings.getInstance(project);
+        if (settings.analyzeAfterBuild() && settings.source() != SpringGraphSettings.Source.BUILD) {
+            SpringGraphAnalyzer.getInstance(project).analyze(false); // reloads again when done
+        }
     }
 }

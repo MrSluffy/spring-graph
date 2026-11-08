@@ -22,13 +22,17 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import io.springgraph.intellij.analysis.IdeReports;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
- * Finds where builds put {@code graph.json}. Requires a read action; does no file I/O itself.
+ * Finds where builds put {@code graph.json}, and where the IDE analysis puts it ({@link IdeReports}). Requires a read
+ * action; does no file I/O itself.
  *
  * <p>Checked for every module: its IntelliJ compiler output (the IntelliJ build system), and the Gradle and Maven main
  * output directories of its content roots and their parents. Gradle imports one module per source set, whose content root
@@ -43,33 +47,59 @@ final class ReportLocator {
 
     private ReportLocator() {}
 
-    static Set<Path> candidates(Project project) {
+    /** Per module, in module-name order: where its build may have written a report. */
+    static Map<String, Set<Path>> buildCandidates(Project project) {
+        Map<String, Set<Path>> result = new TreeMap<>();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+            result.put(module.getName(), candidates(project, module));
+        }
+        return result;
+    }
+
+    /** Per module: where the IDE analysis writes its report. */
+    static Map<String, Path> ideReports(Project project) {
+        Map<String, Path> result = new TreeMap<>();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+            result.put(module.getName(), IdeReports.report(project, module.getName()));
+        }
+        return result;
+    }
+
+    private static Set<Path> candidates(Project project, Module module) {
         Path base = toPath(project.getBasePath());
         Set<Path> result = new LinkedHashSet<>();
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-            CompilerModuleExtension compiler = CompilerModuleExtension.getInstance(module);
-            if (compiler != null && compiler.getCompilerOutputUrl() != null) {
-                Path output = toPath(VfsUtilCore.urlToPath(compiler.getCompilerOutputUrl()));
-                if (output != null) {
-                    result.add(output.resolve(REPORT).normalize());
-                }
+        CompilerModuleExtension compiler = CompilerModuleExtension.getInstance(module);
+        if (compiler != null && compiler.getCompilerOutputUrl() != null) {
+            Path output = toPath(VfsUtilCore.urlToPath(compiler.getCompilerOutputUrl()));
+            if (output != null && insideProject(base, output)) {
+                result.add(output.resolve(REPORT).normalize());
             }
-            for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-                if (!root.isInLocalFileSystem()) {
-                    continue;
+        }
+        for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+            if (!root.isInLocalFileSystem()) {
+                continue;
+            }
+            Path dir = root.toNioPath();
+            for (int level = 0; level <= PARENT_LEVELS && dir != null; level++, dir = dir.getParent()) {
+                if (!insideProject(base, dir)) {
+                    break;
                 }
-                Path dir = root.toNioPath();
-                for (int level = 0; level <= PARENT_LEVELS && dir != null; level++, dir = dir.getParent()) {
-                    if (base != null && !dir.startsWith(base)) {
-                        break; // never look outside the project
-                    }
-                    for (String output : BUILD_OUTPUTS) {
-                        result.add(dir.resolve(output).resolve(REPORT).normalize());
-                    }
+                for (String output : BUILD_OUTPUTS) {
+                    result.add(dir.resolve(output).resolve(REPORT).normalize());
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * Only paths inside the project directory are ever probed. Module files (.iml, .idea) come from the repository and
+     * are loaded even for untrusted projects, so an output path in them must not make the IDE touch arbitrary
+     * locations, for example a network share (\\host\share), which on Windows sends the user's credentials. Without
+     * a project directory nothing is probed.
+     */
+    static boolean insideProject(Path base, Path path) {
+        return base != null && path.normalize().startsWith(base);
     }
 
     /** The output directory of a report, relative to the project when possible, for display. */

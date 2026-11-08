@@ -128,7 +128,8 @@ Coverage: 1 of 3 dependencies statically validated
 ```
 
 The same directory also has `graph.json`, a [machine-readable version](reference/report-json.md) for tools. In IntelliJ
-IDEA, the [SpringGraph plugin](intellij.md) shows it as gutter icons and a tool window.
+IDEA, the [SpringGraph plugin](intellij.md) shows it as gutter icons and a tool window. The plugin can also run its own
+bundled copy of the processor, to try SpringGraph on a project before changing its build.
 
 ## 4. Declare runtime boundaries
 

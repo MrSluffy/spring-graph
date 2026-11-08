@@ -44,7 +44,7 @@ public class SpringGraphPanelTest extends LightJavaCodeInsightFixtureTestCase {
         assertEquals(2, root.getChildCount());
 
         DefaultMutableTreeNode report = (DefaultMutableTreeNode) root.getChildAt(0);
-        assertEquals("app/build/classes/java/main advisory, 4 of 15 dependencies validated", text(report));
+        assertEquals("app/build/classes/java/main advisory, 4 of 15 dependencies validated (build)", text(report));
         assertEquals(List.of("Findings (11)", "Components (13)", "Excluded (3)"), children(report));
 
         DefaultMutableTreeNode findings = (DefaultMutableTreeNode) report.getChildAt(0);

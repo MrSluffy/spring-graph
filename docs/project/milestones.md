@@ -101,7 +101,7 @@ Details: [pilot results](pilot-results.md).
 | Maven and Gradle examples | ✅ Verified in fresh consumer projects |
 | Document unsupported features | ✅ Support matrix and diagnostics reference |
 | Publish evaluation results | ✅ Evaluation section of this site |
-| Release an experimental `0.x` | 🟡 `0.1.0-rc.3` on Maven Central, GitHub Packages and GitHub Releases. `0.1.0` not released yet |
+| Release an experimental `0.x` | 🟡 `0.1.0-rc.4` on Maven Central, GitHub Packages and GitHub Releases. `0.1.0` not released yet |
 
 **Left before `0.1.0`:**
 
@@ -134,7 +134,7 @@ realistic application.
 | Limited `@Bean` analysis | ❌ Not started. Next candidate: removes most manual boundary declarations |
 | Multi-module metadata | ❌ Not started; needs a design first |
 | Incremental-processing support | ❌ Not started, never tested |
-| Dependency explanation tools | 🟡 The report shows why a candidate was chosen (`via @Primary`). New: `graph.json` and an experimental [IntelliJ plugin](../intellij.md) (gutter icons, tool window), not on Marketplace yet and not tried by outside users |
+| Dependency explanation tools | 🟡 The report shows why a candidate was chosen (`via @Primary`). New: `graph.json` and an experimental [IntelliJ plugin](../intellij.md) (gutter icons, tool window, standalone analysis with the bundled `0.1.0-rc.4`), not on Marketplace yet and not tried by outside users |
 | Wider version compatibility | ❌ Two Spring lines tried; no compatibility matrix in CI |
 
 Still not validated after the qualifier work: several candidates matching one qualifier, `@Priority`, and candidates
