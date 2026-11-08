@@ -47,7 +47,7 @@
               <version>${lombok.version}</version>
             </path>
             <path>
-              <groupId>io.springgraph</groupId>
+              <groupId>io.github.mrsluffy</groupId>
               <artifactId>springgraph-processor</artifactId>
               <version>${springgraph.version}</version>
             </path>

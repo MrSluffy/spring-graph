@@ -13,6 +13,9 @@
 - The report shows the parameter's qualifier and why a candidate was chosen (`[validated via @Primary]`).
 - Still not validated: several candidates matching one qualifier, `@Priority`, `@Named`-named candidates.
 - Release pipeline: GitHub Packages now also receives the Gradle module metadata and the signatures.
+- **Coordinates changed**: the `groupId` is now `io.github.mrsluffy` (artifact `springgraph-processor` unchanged), the
+  Maven Central namespace verified through the GitHub account. `0.1.0-rc.1` and `0.1.0-rc.2` remain on GitHub Packages
+  under `io.springgraph`. Java package names are unchanged (`io.springgraph.processor`).
 
 ## 0.1.0 (experimental), 2026-11-07
 

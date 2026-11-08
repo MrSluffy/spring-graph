@@ -11,11 +11,9 @@ compiles. It does not change your runtime: Spring still constructs every bean. N
 
 ## 1. Get the processor
 
-Releases are published to Maven Central and GitHub Packages, and attached to
-[GitHub Releases](https://github.com/MrSluffy/spring-graph/releases) (see [release history](project/release-history.md)).
-Until the first release is out, build it from source.
+The `0.1.0-rc.2` pre-release is available from GitHub Packages. There is no Maven Central release yet; see the
+[release history](project/release-history.md).
 
-- **Maven Central**: no extra repository needed for Maven; for Gradle use `mavenCentral()`.
 - **GitHub Packages**: add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
   lowercase). GitHub requires a personal access token (classic) with `read:packages`, even for public packages. In
   Gradle:
@@ -33,31 +31,38 @@ Until the first release is out, build it from source.
   ```
 
   Put `gpr.user=<your GitHub username>` and `gpr.key=<token>` in `~/.gradle/gradle.properties`, never in the project.
-  For Maven, add a `<server>` with the same token to `~/.m2/settings.xml`, as described in
+  For Maven, add this repository to your `pom.xml`:
+
+  ```xml
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/mrsluffy/spring-graph</url>
+    </repository>
+  </repositories>
+  ```
+
+  Add a `<server>` with the matching `github` ID, your GitHub username and token to `~/.m2/settings.xml`, as described in
   [GitHub's Maven registry docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
-- **From source**: install into your local Maven repository, then use `mavenLocal()` in Gradle:
+- **From source**: in a checkout of this revision, install into your local Maven repository:
 
   ```
-  git clone https://github.com/MrSluffy/spring-graph.git
-  cd spring-graph
   ./gradlew :springgraph-processor:publishToMavenLocal
   ```
 
-  This installs `io.springgraph:springgraph-processor:0.1.0-rc.2` (the version in `gradle.properties`) into
-  `~/.m2/repository`. The examples below use the same version.
+  This installs `io.github.mrsluffy:springgraph-processor:0.1.0-rc.2` (the version in `gradle.properties`) into
+  `~/.m2/repository`. The group and version depend on the checkout; check `build.gradle.kts` and `gradle.properties`
+  when using another revision. Use `mavenLocal()` in Gradle to resolve the local artifact.
 
 ## 2. Add it to your build
 
+The examples use the published GitHub Packages pre-release. For the source installation above, replace
+`io.springgraph` with `io.github.mrsluffy` in the dependency coordinates and use the version installed locally.
 Start in advisory mode. Findings are warnings and the build always passes.
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
 dependencies {
     annotationProcessor("io.springgraph:springgraph-processor:0.1.0-rc.2")
 }

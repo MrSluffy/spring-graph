@@ -2,11 +2,15 @@
 
 | Version | Status | Where | Notes |
 |---|---|---|---|
-| Unreleased | On `development` | — | `@Qualifier`, `@Primary`, `@Fallback` resolution; decorator fix; `@Named` reported as SG008 |
+| Unreleased | On `development` | — | `@Qualifier`, `@Primary`, `@Fallback` resolution; decorator fix; `@Named` reported as SG008; `groupId` changed to `io.github.mrsluffy` |
 | `0.1.0-rc.2` | Partly published | GitHub Packages | Includes the Gradle module metadata and signatures. Maven Central rejected the deployment at validation, so no GitHub Release was created |
 | `0.1.0-rc.1` | Published | GitHub Packages | First pipeline run. Missing the Gradle `.module` file and signatures; Gradle still resolves it through the POM |
 
 Pre-release versions are for testing the release pipeline. The first intended public release is `0.1.0`.
+
+`0.1.0-rc.1` and `0.1.0-rc.2` were published as `io.springgraph:springgraph-processor`. Later versions use
+`io.github.mrsluffy:springgraph-processor`, because Maven Central only accepts a namespace the publisher can prove they
+own.
 
 Full details: [CHANGELOG.md](https://github.com/MrSluffy/spring-graph/blob/development/CHANGELOG.md).
 
