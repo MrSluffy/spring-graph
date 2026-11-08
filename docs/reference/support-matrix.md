@@ -13,13 +13,13 @@
 | Other scopes | SG004, component excluded |
 | Zero or multiple constructors | SG005, component excluded |
 | Generics, collections, Optional, Provider, `@Lazy` | SG006, dependency not validated |
-| `@Qualifier("name")` on a constructor parameter | Supported (unreleased). A candidate matches by its class-level `@Qualifier` value (also inherited from a superclass) or by its bean name, as in Spring |
+| `@Qualifier("name")` on a constructor parameter | Supported since `0.1.0-rc.3`. A candidate matches by its class-level `@Qualifier` value (also inherited from a superclass) or by its bean name, as in Spring |
 | `@Qualifier` without a value; `@Named` or custom qualifier annotations on a parameter | SG008, dependency not validated |
 | `@Qualifier` when a candidate is named by `@Named` / `@ManagedBean` or has a custom qualifier | SG008, dependency not validated |
 | Several candidates match the same `@Qualifier` | SG006: Spring then chooses by bean name, which is not modelled |
-| `@Primary` | Supported (unreleased): a unique `@Primary` candidate is validated; several are SG007. Also via meta-annotation |
-| `@Fallback` (Spring 6.2+) | Supported (unreleased): without `@Primary`, a unique non-`@Fallback` candidate is validated |
-| A component that requests its own type (decorator pattern) | Supported (unreleased): it is not its own candidate unless nothing else matches, as in Spring |
+| `@Primary` | Supported since `0.1.0-rc.3`: a unique `@Primary` candidate is validated; several are SG007. Also via meta-annotation |
+| `@Fallback` (Spring 6.2+) | Supported since `0.1.0-rc.3`: without `@Primary`, a unique non-`@Fallback` candidate is validated |
+| A component that requests its own type (decorator pattern) | Supported since `0.1.0-rc.3`: it is not its own candidate unless nothing else matches, as in Spring |
 | `@Priority` among several remaining candidates | SG006, dependency not validated |
 | Several candidates, parameter name equals one bean name | SG006: Spring's name fallback needs `-parameters`, which the processor cannot see |
 | Lombok-generated constructors (`@RequiredArgsConstructor`, `@AllArgsConstructor`) | Supported, any processor order (Maven checked; see `maven-lombok.md`) |

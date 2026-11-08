@@ -18,7 +18,7 @@ The processor is `io.github.mrsluffy:springgraph-processor`. Releases are on Mav
 - **Maven Central** (recommended): no setup. Maven uses it by default; in Gradle, declare `mavenCentral()`.
 - **GitHub Packages**: only needed if you cannot use Maven Central. Add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
   lowercase). GitHub requires a personal access token (classic) with `read:packages`, even for public packages. In
-  Gradle:
+  Gradle, put GitHub Packages before `mavenCentral()` so Gradle tries it first for the processor:
 
   ```kotlin
   repositories {
@@ -29,6 +29,7 @@ The processor is `io.github.mrsluffy:springgraph-processor`. Releases are on Mav
               password = providers.gradleProperty("gpr.key").getOrNull() ?: System.getenv("TOKEN")
           }
       }
+      mavenCentral()
   }
   ```
 
@@ -54,7 +55,7 @@ The processor is `io.github.mrsluffy:springgraph-processor`. Releases are on Mav
 
   This installs `io.github.mrsluffy:springgraph-processor:0.1.0-rc.3` (the version in `gradle.properties`) into
   `~/.m2/repository`. The group and version depend on the checkout; check `build.gradle.kts` and `gradle.properties`
-  when using another revision. Use `mavenLocal()` in Gradle to resolve the local artifact.
+  when using another revision. In Gradle, put `mavenLocal()` before `mavenCentral()` to prefer the locally built artifact.
 
 ## 2. Add it to your build
 
