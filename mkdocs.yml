@@ -8,6 +8,9 @@ copyright: Licensed under the Apache License 2.0
 
 theme:
   name: material
+  # White on the colored header bar; the colored logo is used as the browser tab icon.
+  logo: assets/logo-white.svg
+  favicon: assets/logo.svg
   features:
     - navigation.sections
     - navigation.top
