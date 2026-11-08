@@ -11,10 +11,12 @@ compiles. It does not change your runtime: Spring still constructs every bean. N
 
 ## 1. Get the processor
 
-The `0.1.0-rc.2` pre-release is available from GitHub Packages. There is no Maven Central release yet; see the
-[release history](project/release-history.md).
+The processor is `io.github.mrsluffy:springgraph-processor`. Releases are on Maven Central, GitHub Packages and
+[GitHub Releases](https://github.com/MrSluffy/spring-graph/releases); see the
+[release history](project/release-history.md) for the available versions.
 
-- **GitHub Packages**: add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
+- **Maven Central** (recommended): no setup. Maven uses it by default; in Gradle, declare `mavenCentral()`.
+- **GitHub Packages**: only needed if you cannot use Maven Central. Add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
   lowercase). GitHub requires a personal access token (classic) with `read:packages`, even for public packages. In
   Gradle:
 
@@ -56,15 +58,18 @@ The `0.1.0-rc.2` pre-release is available from GitHub Packages. There is no Mave
 
 ## 2. Add it to your build
 
-The examples use the published GitHub Packages pre-release. For the source installation above, replace
-`io.springgraph` with `io.github.mrsluffy` in the dependency coordinates and use the version installed locally.
-Start in advisory mode. Findings are warnings and the build always passes.
+The examples use the version in this guide's title. For a source installation, use the version you installed. Start
+in advisory mode. Findings are warnings and the build always passes.
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    annotationProcessor("io.springgraph:springgraph-processor:0.1.0-rc.3")
+    annotationProcessor("io.github.mrsluffy:springgraph-processor:0.1.0-rc.3")
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -90,7 +95,7 @@ the same list. The order does not matter.
     <annotationProcessorPaths>
       <!-- existing processors, e.g. Lombok -->
       <path>
-        <groupId>io.springgraph</groupId>
+        <groupId>io.github.mrsluffy</groupId>
         <artifactId>springgraph-processor</artifactId>
         <version>0.1.0-rc.3</version>
       </path>

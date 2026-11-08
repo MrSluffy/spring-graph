@@ -101,15 +101,14 @@ Details: [pilot results](pilot-results.md).
 | Maven and Gradle examples | ✅ Verified in fresh consumer projects |
 | Document unsupported features | ✅ Support matrix and diagnostics reference |
 | Publish evaluation results | ✅ Evaluation section of this site |
-| Release an experimental `0.x` | 🟡 `0.1.0-rc.1` and `0.1.0-rc.2` on GitHub Packages. Maven Central rejected `rc.2` at validation; no GitHub Release yet |
+| Release an experimental `0.x` | 🟡 `0.1.0-rc.3` on Maven Central, GitHub Packages and GitHub Releases. `0.1.0` not released yet |
 
 **Left before `0.1.0`:**
 
-1. Fix the Maven Central validation failure. 🟡 The `groupId` is now `io.github.mrsluffy`, a namespace Central verifies
-   through the GitHub account (`io.springgraph` needed the domain `springgraph.io`). Still to confirm: the signing key
-   is on a public key server. Coordinates cannot change after a Central release.
-2. Complete one full release run, including the Maven Central upload (dropped instead of published) and the draft GitHub
-   Release.
+1. ✅ Fix the Maven Central validation failure: the `groupId` is now `io.github.mrsluffy`, a namespace Central verifies
+   through the GitHub account (`io.springgraph` needed the domain `springgraph.io`). These coordinates are now permanent.
+2. ✅ Complete one full release run: `0.1.0-rc.3` was validated, published on Central, and released on GitHub from the
+   draft.
 3. Release `0.1.0`.
 
 ---
@@ -145,7 +144,7 @@ named by `@Named` or `@ManagedBean`.
 
 ## Suggested order from here
 
-1. Finish Phase 5: fix the Central validation, a full release run, `0.1.0`.
+1. Finish Phase 5: release `0.1.0`.
 2. Get one or two outside users. The plan's success criteria need evidence from people other than the maintainers.
 3. Phase 7: limited `@Bean` analysis, then incremental-build behavior, then a version matrix in CI.
 4. Revisit Gate B only with measurements on a realistic application.
