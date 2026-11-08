@@ -55,6 +55,8 @@ public final class SpringGraphProcessor extends AbstractProcessor {
     public static final String OPT_MODE = "springgraph.mode";
     public static final String OPT_BOUNDARIES = "springgraph.runtimeBoundaries";
     public static final String REPORT_PATH = "META-INF/springgraph/graph.txt";
+    /** Machine-readable report for tools; see docs/reference/report-json.md. */
+    public static final String JSON_REPORT_PATH = "META-INF/springgraph/graph.json";
 
     /** Null when the processor is disabled or misconfigured. */
     private Options options;

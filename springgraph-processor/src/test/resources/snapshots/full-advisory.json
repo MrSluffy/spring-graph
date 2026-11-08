@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "mode": "advisory",
+  "coverage": {
+    "validated": 4,
+    "total": 15
+  },
+  "components": [
+    {
+      "name": "p.CycleA",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "b",
+          "type": "p.CycleB",
+          "qualifier": null,
+          "resolution": "STATIC",
+          "targets": ["p.CycleB"],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "p.CycleB",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "a",
+          "type": "p.CycleA",
+          "qualifier": null,
+          "resolution": "STATIC",
+          "targets": ["p.CycleA"],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "p.DefaultGateway",
+      "conditional": null,
+      "dependencies": []
+    },
+    {
+      "name": "p.JdbcStore",
+      "conditional": "@Profile",
+      "dependencies": []
+    },
+    {
+      "name": "p.JpaStore",
+      "conditional": "@Profile",
+      "dependencies": []
+    },
+    {
+      "name": "p.MailSender",
+      "conditional": null,
+      "dependencies": []
+    },
+    {
+      "name": "p.Messaging",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "sender",
+          "type": "p.Sender",
+          "qualifier": null,
+          "resolution": "AMBIGUOUS",
+          "targets": ["p.MailSender", "p.SmsSender"],
+          "reason": null
+        },
+        {
+          "index": 1,
+          "parameter": "smsSender",
+          "type": "p.Sender",
+          "qualifier": null,
+          "resolution": "UNSUPPORTED",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 2,
+          "parameter": "notifier",
+          "type": "p.Notifier",
+          "qualifier": null,
+          "resolution": "STATIC",
+          "targets": ["p.PrimaryNotifier"],
+          "reason": "@Primary"
+        }
+      ]
+    },
+    {
+      "name": "p.OrderService",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "gateway",
+          "type": "p.Gateway",
+          "qualifier": null,
+          "resolution": "STATIC",
+          "targets": ["p.DefaultGateway"],
+          "reason": null
+        },
+        {
+          "index": 1,
+          "parameter": "clock",
+          "type": "p.Clock",
+          "qualifier": null,
+          "resolution": "BOUNDARY",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 2,
+          "parameter": "repo",
+          "type": "p.OrderRepo",
+          "qualifier": null,
+          "resolution": "REPOSITORY",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 3,
+          "parameter": "value",
+          "type": "java.lang.String",
+          "qualifier": null,
+          "resolution": "VALUE",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 4,
+          "parameter": "missing",
+          "type": "p.Missing",
+          "qualifier": null,
+          "resolution": "MISSING",
+          "targets": [],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "p.OtherNotifier",
+      "conditional": null,
+      "dependencies": []
+    },
+    {
+      "name": "p.PrimaryNotifier",
+      "conditional": null,
+      "dependencies": []
+    },
+    {
+      "name": "p.SmsSender",
+      "conditional": null,
+      "dependencies": []
+    },
+    {
+      "name": "p.StoreUser",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "store",
+          "type": "p.Store",
+          "qualifier": null,
+          "resolution": "BOUNDARY",
+          "targets": [],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "p.Unsupported",
+      "conditional": null,
+      "dependencies": [
+        {
+          "index": 0,
+          "parameter": "q",
+          "type": "p.Gateway",
+          "qualifier": "x",
+          "resolution": "BOUNDARY",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 1,
+          "parameter": "lazy",
+          "type": "p.Gateway",
+          "qualifier": null,
+          "resolution": "UNSUPPORTED",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 2,
+          "parameter": "all",
+          "type": "java.util.List",
+          "qualifier": null,
+          "resolution": "UNSUPPORTED",
+          "targets": [],
+          "reason": null
+        },
+        {
+          "index": 3,
+          "parameter": "maybe",
+          "type": "java.util.Optional",
+          "qualifier": null,
+          "resolution": "UNSUPPORTED",
+          "targets": [],
+          "reason": null
+        }
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "name": "p.Proto",
+      "reason": "scope 'prototype' is not supported",
+      "configuration": false
+    },
+    {
+      "name": "p.TwoCtors",
+      "reason": "2 accessible constructors (exactly one is supported)",
+      "configuration": false
+    },
+    {
+      "name": "p.Config",
+      "reason": "@Configuration is not interpreted (its @Bean methods are unknown)",
+      "configuration": true
+    }
+  ],
+  "findings": [
+    {
+      "code": "SG004",
+      "severity": "WARNING",
+      "component": "p.Proto",
+      "parameter": null,
+      "message": "Unsupported scope 'prototype' on p.Proto. Only singleton components are validated; this component is excluded from the graph."
+    },
+    {
+      "code": "SG005",
+      "severity": "WARNING",
+      "component": "p.TwoCtors",
+      "parameter": null,
+      "message": "p.TwoCtors has 2 accessible constructors. Exactly one is supported; this component is excluded from the graph."
+    },
+    {
+      "code": "SG006",
+      "severity": "WARNING",
+      "component": "p.Messaging",
+      "parameter": 1,
+      "message": "Several beans match p.Sender (p.MailSender, p.SmsSender), but parameter 'smsSender' matches the bean name of p.SmsSender. Spring selects it only if the code is compiled with -parameters (Spring Boot's build plugins enable it); otherwise startup fails as ambiguous. The dependency is not validated. Add @Qualifier(\"smsSender\") to make the choice independent of compiler flags."
+    },
+    {
+      "code": "SG006",
+      "severity": "WARNING",
+      "component": "p.Unsupported",
+      "parameter": 1,
+      "message": "@Lazy injection of p.Gateway is not supported; the dependency is not validated."
+    },
+    {
+      "code": "SG006",
+      "severity": "WARNING",
+      "component": "p.Unsupported",
+      "parameter": 2,
+      "message": "Generic, collection, optional or provider injection of java.util.List<p.Gateway> is not supported; the dependency is not validated."
+    },
+    {
+      "code": "SG006",
+      "severity": "WARNING",
+      "component": "p.Unsupported",
+      "parameter": 3,
+      "message": "Generic, collection, optional or provider injection of java.util.Optional<p.Gateway> is not supported; the dependency is not validated."
+    },
+    {
+      "code": "SG009",
+      "severity": "WARNING",
+      "component": null,
+      "parameter": null,
+      "message": "Runtime boundary 'java.lang.Runnable' is never requested by any analysed component. Remove it if it is stale."
+    },
+    {
+      "code": "SG009",
+      "severity": "WARNING",
+      "component": null,
+      "parameter": null,
+      "message": "Runtime boundary 'p.Clok' was not found on the compilation classpath, so it can never match a dependency."
+    },
+    {
+      "code": "SG007",
+      "severity": "WARNING",
+      "component": "p.Messaging",
+      "parameter": 0,
+      "message": "Ambiguous binding for p.Sender. Candidates: p.MailSender, p.SmsSender.\n\nDependency path:\n  p.Messaging\n    -> p.Sender"
+    },
+    {
+      "code": "SG001",
+      "severity": "WARNING",
+      "component": "p.OrderService",
+      "parameter": 4,
+      "message": "No static binding found for p.Missing.\n\nDependency path:\n  p.OrderService\n    -> p.Missing\n\nGraph policy:\n  Advisory mode: this is a suspected missing binding, not a proven error.\n\nPossible fixes:\n  - Add a supported implementation.\n  - Include an existing component in the graph.\n  - Declare a runtime boundary (-Aspringgraph.runtimeBoundaries=p.Missing) if Spring supplies this dependency."
+    },
+    {
+      "code": "SG003",
+      "severity": "WARNING",
+      "component": "p.CycleA",
+      "parameter": null,
+      "message": "Eager constructor dependency cycle:\n  p.CycleA\n    -> p.CycleB\n    -> p.CycleA"
+    }
+  ]
+}

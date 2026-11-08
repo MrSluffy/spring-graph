@@ -29,6 +29,7 @@ error: SG001: No static binding found for com.example.PaymentGateway.
 - [Evaluation](docs/evaluation/): pilot results, false positives found, build overhead
 - [Changelog](CHANGELOG.md)
 - [Release history](docs/project/release-history.md): published versions and how to install pre-releases
+- [IntelliJ plugin](docs/intellij.md): gutter icons and a tool window for the report (experimental)
 
 ## Build from source
 
@@ -40,7 +41,8 @@ Requires JDK 21 to build. The processor itself targets Java 17.
 ```
 
 Modules: `springgraph-processor` (the product), `springgraph-spring` (construction-integration experiment, not released),
-`examples/` (samples and pilots).
+`examples/` (samples and pilots). `springgraph-intellij` is the IntelliJ plugin, a separate Gradle build
+(`./gradlew -p springgraph-intellij build`); see [IntelliJ plugin](docs/intellij.md).
 
 ## Contributing
 

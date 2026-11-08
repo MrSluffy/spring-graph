@@ -134,7 +134,7 @@ realistic application.
 | Limited `@Bean` analysis | ❌ Not started. Next candidate: removes most manual boundary declarations |
 | Multi-module metadata | ❌ Not started; needs a design first |
 | Incremental-processing support | ❌ Not started, never tested |
-| Dependency explanation tools | 🟡 The report shows why a candidate was chosen (`via @Primary`); no dedicated explain feature |
+| Dependency explanation tools | 🟡 The report shows why a candidate was chosen (`via @Primary`). New: `graph.json` and an experimental [IntelliJ plugin](../intellij.md) (gutter icons, tool window), not on Marketplace yet and not tried by outside users |
 | Wider version compatibility | ❌ Two Spring lines tried; no compatibility matrix in CI |
 
 Still not validated after the qualifier work: several candidates matching one qualifier, `@Priority`, and candidates

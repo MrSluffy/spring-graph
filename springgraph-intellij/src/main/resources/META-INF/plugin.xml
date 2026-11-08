@@ -1,0 +1,59 @@
+<!--
+  Copyright 2026 John Andrew Camu. Licensed under the Apache License, Version 2.0.
+  since-build/until-build and the version are set by the build (build.gradle.kts, gradle.properties).
+-->
+<idea-plugin>
+    <id>io.github.mrsluffy.springgraph</id>
+    <name>SpringGraph</name>
+    <vendor email="werdna.jac@gmail.com" url="https://github.com/MrSluffy/spring-graph">John Andrew Camu</vendor>
+
+    <description><![CDATA[
+<p>Shows the results of the <a href="https://github.com/MrSluffy/spring-graph">SpringGraph</a> annotation processor,
+which checks a supported subset of Spring constructor injection at compile time.</p>
+<ul>
+  <li><b>Gutter icons</b> on constructor parameters of Spring components: validated (click to go to the chosen bean),
+      runtime boundary, Spring Data repository, <code>@Value</code>, unsupported, missing or ambiguous (click to see the
+      candidates).</li>
+  <li><b>SpringGraph tool window</b>: the dependency graph per module, every finding (SG001 to SG009) with navigation to
+      the source, excluded classes, and the share of statically validated dependencies.</li>
+</ul>
+<p>The plugin does not analyse code itself. It reads <code>META-INF/springgraph/graph.json</code>, which the processor
+writes on every compile, and refreshes after each build. So what you see is exactly what the build reported, including
+a failed strict build. Requires the processor (<code>io.github.mrsluffy:springgraph-processor</code>) with
+<code>-Aspringgraph.mode=advisory</code> or <code>strict</code> in your Gradle or Maven build.</p>
+<p>Experimental. Icons are hidden for a constructor that changed since the last build.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider
+                language="JAVA"
+                implementationClass="io.springgraph.intellij.DependencyLineMarkerProvider"/>
+        <toolWindow
+                id="SpringGraph"
+                anchor="right"
+                secondary="false"
+                icon="/icons/springgraph.svg"
+                factoryClass="io.springgraph.intellij.ui.SpringGraphToolWindowFactory"/>
+    </extensions>
+
+    <projectListeners>
+        <listener
+                class="io.springgraph.intellij.BuildFinishedListener"
+                topic="com.intellij.task.ProjectTaskListener"/>
+    </projectListeners>
+
+    <actions>
+        <action
+                id="SpringGraph.Refresh"
+                class="io.springgraph.intellij.ui.RefreshReportsAction"
+                text="Refresh SpringGraph Reports"
+                description="Re-read the SpringGraph reports written by the last build"
+                icon="AllIcons.Actions.Refresh"/>
+        <group id="SpringGraph.ToolWindowToolbar">
+            <reference ref="SpringGraph.Refresh"/>
+        </group>
+    </actions>
+</idea-plugin>
