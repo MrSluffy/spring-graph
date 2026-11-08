@@ -45,5 +45,6 @@ job has read-only access and no secrets; only the deploy job can write to Pages.
 - **Targets:** GitHub Packages, Maven Central (validated, then published manually by default), and a GitHub Release with
   jars, signatures and checksums.
 
-**Status:** proven up to signing and GitHub Packages (`rc.1`, `rc.2`). Maven Central rejected `rc.2` at validation, so the
-Central upload and the GitHub Release have not completed yet.
+**Status:** proven end to end with `0.1.0-rc.3`: signed, validated and published on Maven Central (`USER_MANAGED`),
+published to GitHub Packages, and released on GitHub from the draft. Maven Central had rejected `rc.2` because the old
+`io.springgraph` namespace was not verified.
