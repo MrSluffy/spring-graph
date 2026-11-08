@@ -1,4 +1,4 @@
-# Getting started (0.1.0-rc.3, experimental)
+# Getting started (0.1.0-rc.4, experimental)
 
 SpringGraph is an annotation processor. It checks a supported subset of Spring constructor injection while your code
 compiles. It does not change your runtime: Spring still constructs every bean. Nothing needs to be on the runtime classpath.
@@ -53,7 +53,7 @@ The processor is `io.github.mrsluffy:springgraph-processor`. Releases are on Mav
   ./gradlew :springgraph-processor:publishToMavenLocal
   ```
 
-  This installs `io.github.mrsluffy:springgraph-processor:0.1.0-rc.3` (the version in `gradle.properties`) into
+  This installs `io.github.mrsluffy:springgraph-processor:0.1.0-rc.4` (the version in `gradle.properties`) into
   `~/.m2/repository`. The group and version depend on the checkout; check `build.gradle.kts` and `gradle.properties`
   when using another revision. In Gradle, put `mavenLocal()` before `mavenCentral()` to prefer the locally built artifact.
 
@@ -70,7 +70,7 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("io.github.mrsluffy:springgraph-processor:0.1.0-rc.3")
+    annotationProcessor("io.github.mrsluffy:springgraph-processor:0.1.0-rc.4")
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -98,7 +98,7 @@ the same list. The order does not matter.
       <path>
         <groupId>io.github.mrsluffy</groupId>
         <artifactId>springgraph-processor</artifactId>
-        <version>0.1.0-rc.3</version>
+        <version>0.1.0-rc.4</version>
       </path>
     </annotationProcessorPaths>
     <compilerArgs>
