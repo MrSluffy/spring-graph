@@ -10,6 +10,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
   - package-ecosystem: maven
     directory: /examples/maven-lombok
     schedule:

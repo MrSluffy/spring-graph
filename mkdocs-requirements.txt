@@ -1,0 +1,3 @@
+# Documentation site build (mkdocs.yml). Pinned; Dependabot keeps it current.
+mkdocs==1.6.1
+mkdocs-material==9.8.1

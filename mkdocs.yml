@@ -1,0 +1,72 @@
+site_name: SpringGraph
+site_description: Write Spring. Catch wiring mistakes before startup.
+site_url: https://mrsluffy.github.io/spring-graph/
+repo_url: https://github.com/MrSluffy/spring-graph
+repo_name: MrSluffy/spring-graph
+edit_uri: edit/development/docs/
+copyright: Licensed under the Apache License 2.0
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+
+# docs/releasing.md is kept local (git-ignored) and is not published.
+exclude_docs: |
+  releasing.md
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Reference:
+      - Diagnostics: reference/diagnostics.md
+      - Support matrix: reference/support-matrix.md
+  - Architecture:
+      - Graph boundaries: architecture/graph-boundaries.md
+      - Spring integration: architecture/spring-integration.md
+      - Research: architecture/research.md
+  - Project:
+      - Milestones: project/milestones.md
+      - Gates: project/gates.md
+      - Release criteria: project/release-criteria.md
+      - Pilot results: project/pilot-results.md
+      - Engineering: project/engineering.md
+      - Release history: project/release-history.md
+  - Evaluation:
+      - Developer experience: evaluation/developer-experience.md
+      - Performance: evaluation/performance.md
+      - spring-petclinic: evaluation/petclinic.md
+      - spring-petclinic-rest: evaluation/petclinic-rest.md
+      - Maven + Lombok: evaluation/maven-lombok.md
+      - Seeded mistakes: evaluation/seeded-mistakes-messages.md

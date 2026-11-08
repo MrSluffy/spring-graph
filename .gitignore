@@ -4,6 +4,9 @@ build/
 
 # Release staging created by .github/workflows/release.yml
 /release/
+
+# Documentation site build output (mkdocs build)
+/site/
 !gradle/wrapper/gradle-wrapper.jar
 .kotlin/
 
