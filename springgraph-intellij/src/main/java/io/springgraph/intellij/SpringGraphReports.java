@@ -55,6 +55,8 @@ public final class SpringGraphReports {
 
     private final Project project;
     private final AtomicBoolean requested = new AtomicBoolean();
+    private final Object reloadLock = new Object();
+    private long generation;
     private volatile ReportSnapshot snapshot = ReportSnapshot.EMPTY;
 
     public SpringGraphReports(Project project) {
@@ -76,13 +78,17 @@ public final class SpringGraphReports {
     /** Re-reads every report in the background. */
     public void reload() {
         requested.set(true);
+        long requestGeneration;
+        synchronized (reloadLock) {
+            requestGeneration = ++generation;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (project.isDisposed()) {
                 return;
             }
             Set<Path> candidates =
                     ReadAction.compute(() -> project.isDisposed() ? Set.of() : ReportLocator.candidates(project));
-            update(load(candidates));
+            update(requestGeneration, load(candidates));
         });
     }
 
@@ -105,16 +111,26 @@ public final class SpringGraphReports {
         return ReportSnapshot.of(reports, problems);
     }
 
-    private void update(ReportSnapshot loaded) {
-        snapshot = loaded;
-        ApplicationManager.getApplication()
-                .invokeLater(
-                        () -> {
-                            // Re-run the gutter providers with the new reports; the reason shows in daemon logs.
-                            DaemonCodeAnalyzer.getInstance(project).restart("SpringGraph reports reloaded");
-                            project.getMessageBus().syncPublisher(TOPIC).reportsChanged(loaded);
-                        },
-                        project.getDisposed());
+    private void update(long requestGeneration, ReportSnapshot loaded) {
+        synchronized (reloadLock) {
+            if (project.isDisposed() || requestGeneration != generation) {
+                return;
+            }
+            snapshot = loaded;
+            ApplicationManager.getApplication()
+                    .invokeLater(
+                            () -> {
+                                synchronized (reloadLock) {
+                                    if (project.isDisposed() || requestGeneration != generation) {
+                                        return;
+                                    }
+                                    // Re-run the gutter providers with the new reports.
+                                    DaemonCodeAnalyzer.getInstance(project).restart("SpringGraph reports reloaded");
+                                    project.getMessageBus().syncPublisher(TOPIC).reportsChanged(loaded);
+                                }
+                            },
+                            project.getDisposed());
+        }
     }
 
     @TestOnly

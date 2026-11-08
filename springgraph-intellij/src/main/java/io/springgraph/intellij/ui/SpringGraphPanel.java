@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
@@ -195,6 +196,9 @@ public final class SpringGraphPanel extends SimpleToolWindowPanel {
         if (!(selected instanceof DefaultMutableTreeNode treeNode)
                 || !(treeNode.getUserObject() instanceof Node node)
                 || node.target() == null) {
+            return false;
+        }
+        if (DumbService.isDumb(project)) {
             return false;
         }
         Navigatable target = ReadAction.compute(() -> node.target().get());
