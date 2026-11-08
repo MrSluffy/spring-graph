@@ -72,32 +72,34 @@ public final class BundledProcessor {
     /**
      * The verified jar inside {@code cacheDir}, extracted first if it is missing or does not match the recorded hash.
      */
-    public synchronized Path extractTo(Path cacheDir) throws IOException {
-        Path target = cacheDir.resolve("springgraph-processor-" + version + ".jar");
-        if (Files.isRegularFile(target) && sha256.equals(sha256(target))) {
-            return target;
-        }
-        Files.createDirectories(cacheDir);
-        Path temp = Files.createTempFile(cacheDir, "springgraph-processor-", ".tmp");
-        try {
-            try (InputStream in = BundledProcessor.class.getResourceAsStream(JAR)) {
-                if (in == null) {
-                    throw new IOException("The plugin was built without its bundled processor (" + JAR + ")");
-                }
-                Files.copy(in, temp, StandardCopyOption.REPLACE_EXISTING);
+    public Path extractTo(Path cacheDir) throws IOException {
+        synchronized (BundledProcessor.class) {
+            Path target = cacheDir.resolve("springgraph-processor-" + version + ".jar");
+            if (Files.isRegularFile(target) && sha256.equals(sha256(target))) {
+                return target;
             }
-            String actual = sha256(temp);
-            if (!sha256.equals(actual)) {
-                throw new IOException("Bundled processor is corrupt: SHA-256 " + actual + ", expected " + sha256);
-            }
+            Files.createDirectories(cacheDir);
+            Path temp = Files.createTempFile(cacheDir, "springgraph-processor-", ".tmp");
             try {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (AtomicMoveNotSupportedException ex) {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream in = BundledProcessor.class.getResourceAsStream(JAR)) {
+                    if (in == null) {
+                        throw new IOException("The plugin was built without its bundled processor (" + JAR + ")");
+                    }
+                    Files.copy(in, temp, StandardCopyOption.REPLACE_EXISTING);
+                }
+                String actual = sha256(temp);
+                if (!sha256.equals(actual)) {
+                    throw new IOException("Bundled processor is corrupt: SHA-256 " + actual + ", expected " + sha256);
+                }
+                try {
+                    Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                } catch (AtomicMoveNotSupportedException ex) {
+                    Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return target;
+            } finally {
+                Files.deleteIfExists(temp);
             }
-            return target;
-        } finally {
-            Files.deleteIfExists(temp);
         }
     }
 

@@ -25,9 +25,11 @@
   Maven Central, pinned by SHA-256, no runtime download) on each Spring module, so the build needs no changes. New
   settings page (Settings | Tools | SpringGraph): report source (build, IDE analysis, or automatic per module), mode,
   runtime boundaries, and analysis after each build. The Gradle or Maven build is never changed.
-- IntelliJ plugin release pipeline (`release-intellij.yml`, tags `intellij-v*`): signed-tag checks, tests and Plugin
-  Verifier, author signing with JetBrains' signer, JetBrains Marketplace upload, and a GitHub Release with the signed
-  zip. `scripts/tag-release.sh --plugin` creates the tag.
+
+- IntelliJ plugin release pipeline (`release-intellij.yml`): a signed `intellij-v<pluginVersion>` tag on a commit of the
+  release branch, by the maintainer key, runs the tests and Plugin Verifier, signs the plugin with JetBrains' signer,
+  uploads it to JetBrains Marketplace, and creates a GitHub Release with the signed zip. Processor releases keep their
+  `v*` tags.
 
 ## 0.1.0 (experimental), 2026-11-07
 

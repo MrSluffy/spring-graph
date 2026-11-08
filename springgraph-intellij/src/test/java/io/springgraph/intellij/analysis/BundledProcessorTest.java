@@ -17,11 +17,16 @@ package io.springgraph.intellij.analysis;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +55,41 @@ public class BundledProcessorTest {
                     "graph.json needs 0.1.0-rc.4 or newer",
                     file.getEntry("io/springgraph/processor/internal/report/JsonReport.class"));
             assertNotNull(file.getEntry("META-INF/services/javax.annotation.processing.Processor"));
+        }
+    }
+
+    @Test
+    public void extractionUsesTheSameLockAcrossInstances() throws Exception {
+        Path cache = temp.getRoot().toPath();
+        var executor = Executors.newFixedThreadPool(2);
+        var started = new CountDownLatch(2);
+        try {
+            java.util.concurrent.Future<Path> first;
+            java.util.concurrent.Future<Path> second;
+            synchronized (BundledProcessor.class) {
+                first = executor.submit(() -> {
+                    BundledProcessor processor = BundledProcessor.load();
+                    started.countDown();
+                    return processor.extractTo(cache);
+                });
+                second = executor.submit(() -> {
+                    BundledProcessor processor = BundledProcessor.load();
+                    started.countDown();
+                    return processor.extractTo(cache);
+                });
+                assertTrue(started.await(5, TimeUnit.SECONDS));
+                assertThrows(TimeoutException.class, () -> first.get(100, TimeUnit.MILLISECONDS));
+                assertThrows(TimeoutException.class, () -> second.get(100, TimeUnit.MILLISECONDS));
+                try (var files = Files.list(cache)) {
+                    assertEquals(0, files.count());
+                }
+            }
+            Path jar = first.get(5, TimeUnit.SECONDS);
+            assertEquals(jar, second.get(5, TimeUnit.SECONDS));
+            assertEquals(BundledProcessor.load().sha256(), BundledProcessor.sha256(jar));
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
         }
     }
 
