@@ -2,6 +2,7 @@
 
 | Version | Status | Where | Notes |
 |---|---|---|---|
+| `0.1.0-rc.4` | Published | Maven Central, GitHub Packages, [GitHub Release](https://github.com/MrSluffy/spring-graph/releases/tag/v0.1.0-rc.4) | Adds the JSON report `graph.json` (ASCII, schema 1). The version bundled in the IntelliJ plugin |
 | `0.1.0-rc.3` | Published | Maven Central, GitHub Packages, [GitHub Release](https://github.com/MrSluffy/spring-graph/releases/tag/v0.1.0-rc.3) | First complete release run. `@Qualifier`, `@Primary`, `@Fallback` resolution; decorator fix; `@Named` reported as SG008; `groupId` changed to `io.github.mrsluffy` |
 | `0.1.0-rc.2` | Partly published | GitHub Packages | Includes the Gradle module metadata and signatures. Maven Central rejected the deployment at validation, so no GitHub Release was created |
 | `0.1.0-rc.1` | Published | GitHub Packages | First pipeline run. Missing the Gradle `.module` file and signatures; Gradle still resolves it through the POM |

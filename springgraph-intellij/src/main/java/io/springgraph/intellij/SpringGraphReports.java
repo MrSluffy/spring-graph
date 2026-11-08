@@ -23,24 +23,28 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import io.springgraph.intellij.report.ReportReader;
+import io.springgraph.intellij.report.ReportSelection;
 import io.springgraph.intellij.report.ReportSnapshot;
+import io.springgraph.intellij.settings.SpringGraphSettings;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.jetbrains.annotations.TestOnly;
 
 /**
- * Holds the SpringGraph reports of the last build. Reports are reloaded after every build started from the IDE
- * ({@link BuildFinishedListener}), on Refresh, and lazily on first use. Loading runs in the background; listeners on
- * {@link #TOPIC} and the editor gutters are refreshed when it finishes.
+ * Holds the reports shown in the tool window and gutters: those written by the project's build, and those written by
+ * the IDE analysis ({@link io.springgraph.intellij.analysis.SpringGraphAnalyzer}), chosen per module by the source
+ * setting ({@link ReportSelection}). Reports are reloaded after every build started from the IDE
+ * ({@link BuildFinishedListener}), after each IDE analysis, on Refresh, and lazily on first use. Loading runs in the
+ * background; listeners on {@link #TOPIC} and the editor gutters are refreshed when it finishes.
  *
- * <p>The plugin never analyses code: everything shown comes from these files, so it always matches what the build
- * reported.
+ * <p>Either way the processor did the analysis: everything shown comes from its {@code graph.json} files.
  */
 @Service(Service.Level.PROJECT)
 public final class SpringGraphReports {
@@ -86,22 +90,44 @@ public final class SpringGraphReports {
             if (project.isDisposed()) {
                 return;
             }
-            Set<Path> candidates =
-                    ReadAction.compute(() -> project.isDisposed() ? Set.of() : ReportLocator.candidates(project));
+            Locations locations = locations();
+            if (locations == null) {
+                return;
+            }
+            List<ReportSelection.Candidate> candidates = ReportSelection.select(
+                    SpringGraphSettings.getInstance(project).source(),
+                    locations.build(),
+                    locations.ide(),
+                    Files::isRegularFile,
+                    file -> ReportLocator.label(project, file));
             update(requestGeneration, load(candidates));
         });
     }
 
-    private ReportSnapshot load(Set<Path> candidates) {
+    /** Modules whose build wrote a report; the IDE analysis skips them in AUTO. Call off the UI thread. */
+    public Set<String> modulesWithBuildReports() {
+        Locations locations = locations();
+        return locations == null
+                ? Set.of()
+                : ReportSelection.modulesWithBuildReports(locations.build(), Files::isRegularFile);
+    }
+
+    private record Locations(Map<String, Set<Path>> build, Map<String, Path> ide) {}
+
+    private Locations locations() {
+        return ReadAction.compute(() -> project.isDisposed()
+                ? null
+                : new Locations(ReportLocator.buildCandidates(project), ReportLocator.ideReports(project)));
+    }
+
+    private ReportSnapshot load(List<ReportSelection.Candidate> candidates) {
         List<ReportSnapshot.Loaded> reports = new ArrayList<>();
         List<ReportSnapshot.Problem> problems = new ArrayList<>();
-        for (Path file : candidates) {
-            if (!Files.isRegularFile(file)) {
-                continue;
-            }
+        for (ReportSelection.Candidate candidate : candidates) {
+            Path file = candidate.file();
             try {
-                reports.add(
-                        new ReportSnapshot.Loaded(file, ReportLocator.label(project, file), ReportReader.read(file)));
+                reports.add(new ReportSnapshot.Loaded(
+                        file, candidate.label(), ReportReader.read(file), candidate.origin()));
             } catch (IOException | RuntimeException ex) {
                 LOG.info("Could not read SpringGraph report " + file, ex);
                 problems.add(new ReportSnapshot.Problem(file, ex.getMessage()));

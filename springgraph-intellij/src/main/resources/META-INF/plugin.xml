@@ -8,8 +8,9 @@
     <vendor email="werdna.jac@gmail.com" url="https://github.com/MrSluffy/spring-graph">John Andrew Camu</vendor>
 
     <description><![CDATA[
-<p>Shows the results of the <a href="https://github.com/MrSluffy/spring-graph">SpringGraph</a> annotation processor,
-which checks a supported subset of Spring constructor injection at compile time.</p>
+<p>Checks a supported subset of Spring constructor injection with the
+<a href="https://github.com/MrSluffy/spring-graph">SpringGraph</a> annotation processor, and shows the results in the
+editor.</p>
 <ul>
   <li><b>Gutter icons</b> on constructor parameters of Spring components: validated (click to go to the chosen bean),
       runtime boundary, Spring Data repository, <code>@Value</code>, unsupported, missing or ambiguous (click to see the
@@ -17,11 +18,18 @@ which checks a supported subset of Spring constructor injection at compile time.
   <li><b>SpringGraph tool window</b>: the dependency graph per module, every finding (SG001 to SG009) with navigation to
       the source, excluded classes, and the share of statically validated dependencies.</li>
 </ul>
-<p>The plugin does not analyse code itself. It reads <code>META-INF/springgraph/graph.json</code>, which the processor
-writes on every compile, and refreshes after each build. So what you see is exactly what the build reported, including
-a failed strict build. Requires the processor (<code>io.github.mrsluffy:springgraph-processor</code>) with
-<code>-Aspringgraph.mode=advisory</code> or <code>strict</code> in your Gradle or Maven build.</p>
-<p>Experimental. Icons are hidden for a constructor that changed since the last build.</p>
+<p>Works with or without the processor in your build:</p>
+<ul>
+  <li><b>IDE analysis</b>: <i>Analyze with SpringGraph</i> runs the processor bundled in the plugin (a pinned release
+      of <code>io.github.mrsluffy:springgraph-processor</code> from Maven Central, checksum-verified, no download) over
+      each Spring module's main sources, with the module's JDK, classpath and annotation processors (Lombok, MapStruct).
+      Mode and runtime boundaries are set under <i>Settings | Tools | SpringGraph</i>. Your Gradle or Maven build is
+      never changed.</li>
+  <li><b>Build reports</b>: if your build already runs the processor with <code>-Aspringgraph.mode</code>, the plugin
+      shows what that build reported, including a failed strict build, and refreshes after each build.</li>
+</ul>
+<p>Experimental. Icons show the last analysis or build: they are hidden for a constructor whose parameter count or
+types changed since then, and other edits show the old result until the next run.</p>
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -37,6 +45,12 @@ a failed strict build. Requires the processor (<code>io.github.mrsluffy:springgr
                 secondary="false"
                 icon="/icons/springgraph.svg"
                 factoryClass="io.springgraph.intellij.ui.SpringGraphToolWindowFactory"/>
+        <projectConfigurable
+                parentId="tools"
+                id="io.github.mrsluffy.springgraph.settings"
+                displayName="SpringGraph"
+                instance="io.springgraph.intellij.settings.SpringGraphConfigurable"/>
+        <notificationGroup id="SpringGraph" displayType="BALLOON"/>
     </extensions>
 
     <projectListeners>
@@ -52,8 +66,24 @@ a failed strict build. Requires the processor (<code>io.github.mrsluffy:springgr
                 text="Refresh SpringGraph Reports"
                 description="Re-read the SpringGraph reports written by the last build"
                 icon="AllIcons.Actions.Refresh"/>
+        <action
+                id="SpringGraph.Analyze"
+                class="io.springgraph.intellij.ui.AnalyzeAction"
+                text="Analyze with SpringGraph"
+                description="Check the Spring modules' constructor injection with the bundled SpringGraph processor"
+                icon="AllIcons.Actions.Execute">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action
+                id="SpringGraph.Settings"
+                class="io.springgraph.intellij.ui.OpenSettingsAction"
+                text="SpringGraph Settings"
+                description="Open Settings | Tools | SpringGraph"
+                icon="AllIcons.General.Settings"/>
         <group id="SpringGraph.ToolWindowToolbar">
+            <reference ref="SpringGraph.Analyze"/>
             <reference ref="SpringGraph.Refresh"/>
+            <reference ref="SpringGraph.Settings"/>
         </group>
     </actions>
 </idea-plugin>

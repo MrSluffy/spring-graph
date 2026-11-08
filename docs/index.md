@@ -15,7 +15,7 @@ error: SG001: No static binding found for com.example.PaymentGateway.
 ```
 
 !!! note "Experimental"
-    SpringGraph is in `0.x`. The `0.1.0-rc.3` pre-release is on Maven Central as
+    SpringGraph is in `0.x`. The `0.1.0-rc.4` pre-release is on Maven Central as
     `io.github.mrsluffy:springgraph-processor`. See [release history](project/release-history.md).
 
 ## Start here

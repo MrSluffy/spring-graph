@@ -32,8 +32,27 @@ public record ReportSnapshot(List<Loaded> reports, List<Problem> problems, Map<S
 
     public static final ReportSnapshot EMPTY = of(List.of(), List.of());
 
-    /** A report and where it came from. {@code label} is the output directory relative to the project. */
-    public record Loaded(Path file, String label, ReportModel model) {}
+    /** Who wrote a report. */
+    public enum Origin {
+        /** The project's own Gradle or Maven build, with the processor it configures. */
+        BUILD,
+        /** The plugin's IDE analysis, with the bundled processor and the plugin settings. */
+        IDE
+    }
+
+    /**
+     * A report and where it came from. {@code label} is the build output directory relative to the project, or the
+     * module name for an IDE analysis.
+     */
+    public record Loaded(Path file, String label, ReportModel model, Origin origin) {
+        public Loaded(Path file, String label, ReportModel model) {
+            this(file, label, model, Origin.BUILD);
+        }
+
+        public boolean isIdeAnalysis() {
+            return origin == Origin.IDE;
+        }
+    }
 
     public record Problem(Path file, String message) {}
 

@@ -119,7 +119,7 @@ public final class DependencyLineMarkerProvider extends LineMarkerProviderDescri
         StringBuilder html = new StringBuilder("<html><b>SpringGraph</b> (")
                 .append(StringUtil.escapeXmlEntities(
                         String.valueOf(entry.report().model().mode)))
-                .append(" build)<br>")
+                .append(entry.report().isIdeAnalysis() ? ", IDE analysis)<br>" : " build)<br>")
                 .append(StringUtil.escapeXmlEntities(Presentation.requested(dependency)))
                 .append(": ")
                 .append(StringUtil.escapeXmlEntities(Presentation.describe(dependency)));

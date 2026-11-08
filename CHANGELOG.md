@@ -21,6 +21,13 @@
   `docs/reference/report-json.md`.
 - New, experimental IntelliJ plugin (`springgraph-intellij`, released separately, not on Marketplace yet): gutter icons
   on constructor parameters and a SpringGraph tool window, both read from `graph.json`. See `docs/intellij.md`.
+- IntelliJ plugin, standalone: **Analyze with SpringGraph** runs the processor bundled in the plugin (`0.1.0-rc.4` from
+  Maven Central, pinned by SHA-256, no runtime download) on each Spring module, so the build needs no changes. New
+  settings page (Settings | Tools | SpringGraph): report source (build, IDE analysis, or automatic per module), mode,
+  runtime boundaries, and analysis after each build. The Gradle or Maven build is never changed.
+- IntelliJ plugin release pipeline (`release-intellij.yml`, tags `intellij-v*`): signed-tag checks, tests and Plugin
+  Verifier, author signing with JetBrains' signer, JetBrains Marketplace upload, and a GitHub Release with the signed
+  zip. `scripts/tag-release.sh --plugin` creates the tag.
 
 ## 0.1.0 (experimental), 2026-11-07
 
