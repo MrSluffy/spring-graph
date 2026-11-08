@@ -1,4 +1,4 @@
-# Getting started (0.1.0, experimental)
+# Getting started (0.1.0-rc.2, experimental)
 
 SpringGraph is an annotation processor. It checks a supported subset of Spring constructor injection while your code
 compiles. It does not change your runtime: Spring still constructs every bean. Nothing needs to be on the runtime classpath.
@@ -12,8 +12,8 @@ compiles. It does not change your runtime: Spring still constructs every bean. N
 ## 1. Get the processor
 
 Releases are published to Maven Central and GitHub Packages, and attached to
-[GitHub Releases](https://github.com/MrSluffy/spring-graph/releases) (see [releasing](releasing.md)). Until the first
-release is out, build it from source.
+[GitHub Releases](https://github.com/MrSluffy/spring-graph/releases) (see [release history](project/release-history.md)).
+Until the first release is out, build it from source.
 
 - **Maven Central**: no extra repository needed for Maven; for Gradle use `mavenCentral()`.
 - **GitHub Packages**: add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
@@ -43,7 +43,8 @@ release is out, build it from source.
   ./gradlew :springgraph-processor:publishToMavenLocal
   ```
 
-  This installs `io.springgraph:springgraph-processor:0.1.0` into `~/.m2/repository`.
+  This installs `io.springgraph:springgraph-processor:0.1.0-rc.2` (the version in `gradle.properties`) into
+  `~/.m2/repository`. The examples below use the same version.
 
 ## 2. Add it to your build
 
@@ -58,7 +59,7 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("io.springgraph:springgraph-processor:0.1.0")
+    annotationProcessor("io.springgraph:springgraph-processor:0.1.0-rc.2")
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -86,7 +87,7 @@ the same list. The order does not matter.
       <path>
         <groupId>io.springgraph</groupId>
         <artifactId>springgraph-processor</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.0-rc.2</version>
       </path>
     </annotationProcessorPaths>
     <compilerArgs>
@@ -147,7 +148,8 @@ conditional components, non-singleton scopes, `@Bean` methods, field and setter 
 
 ## Build impact
 
-On the projects tried (7 to about 190 source files) the processing overhead was within run-to-run noise. The processor is not
+On two small Gradle projects the clean-compile overhead was within run-to-run noise; on a 190-file project, annotation
+processing alone took about 400 ms longer (median). Large projects and full builds were not measured. The processor is not
 incremental, so Gradle recompiles the whole module when it is enabled. See [performance](evaluation/performance.md).
 
 ## Turning it off

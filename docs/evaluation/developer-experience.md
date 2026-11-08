@@ -57,8 +57,10 @@ What this shows:
   the gap grows with application startup time and shrinks if the developer already runs a fast slice test.
 - The baseline only catches these because a `@SpringBootTest` exists. Without one, the mistake surfaces when the app starts.
 - Message quality is comparable on content. Spring already names the missing type and lists ambiguous candidates.
-  SpringGraph adds the source location, the dependency path from a root component, and fix suggestions. Spring's cycle message does not
-  show the cycle; SpringGraph's does (see `SpringGraphProcessorTest`).
+  SpringGraph adds the source location, the dependency path from a root component, and fix suggestions. The cycle comparison
+  used the root exception from the test (`BeanCurrentlyInCreationException`), which does not list the cycle; Spring Boot's
+  startup failure analysis does show the beans in a cycle, but only at startup. SpringGraph shows the cycle at compile time
+  (see `SpringGraphProcessorTest`).
 - All 9 detections per side were correct and there were no false positives in these runs.
 
 ## Not measured yet
