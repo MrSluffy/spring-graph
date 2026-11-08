@@ -4,7 +4,8 @@ plugins {
 }
 
 allprojects {
-    group = "io.springgraph"
+    // Maven Central namespace, verified through the GitHub account. Java packages stay io.springgraph.*.
+    group = "io.github.mrsluffy"
     // version comes from gradle.properties (set it with scripts/set-version.sh)
     repositories { mavenCentral() }
 }

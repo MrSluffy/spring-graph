@@ -105,9 +105,9 @@ Details: [pilot results](pilot-results.md).
 
 **Left before `0.1.0`:**
 
-1. Fix the Maven Central validation failure. Likely causes: the `io.springgraph` namespace is not verified (it needs the
-   domain `springgraph.io`; the alternative is `io.github.mrsluffy`), or the signing key is not on a public key server.
-   Coordinates cannot change after a Central release.
+1. Fix the Maven Central validation failure. 🟡 The `groupId` is now `io.github.mrsluffy`, a namespace Central verifies
+   through the GitHub account (`io.springgraph` needed the domain `springgraph.io`). Still to confirm: the signing key
+   is on a public key server. Coordinates cannot change after a Central release.
 2. Complete one full release run, including the Maven Central upload (dropped instead of published) and the draft GitHub
    Release.
 3. Release `0.1.0`.

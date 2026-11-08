@@ -43,7 +43,7 @@ Until the first release is out, build it from source.
   ./gradlew :springgraph-processor:publishToMavenLocal
   ```
 
-  This installs `io.springgraph:springgraph-processor:0.1.0-rc.2` (the version in `gradle.properties`) into
+  This installs `io.github.mrsluffy:springgraph-processor:0.1.0-rc.2` (the version in `gradle.properties`) into
   `~/.m2/repository`. The examples below use the same version.
 
 ## 2. Add it to your build
@@ -59,7 +59,7 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("io.springgraph:springgraph-processor:0.1.0-rc.2")
+    annotationProcessor("io.github.mrsluffy:springgraph-processor:0.1.0-rc.2")
 }
 
 tasks.named<JavaCompile>("compileJava") {
@@ -85,7 +85,7 @@ the same list. The order does not matter.
     <annotationProcessorPaths>
       <!-- existing processors, e.g. Lombok -->
       <path>
-        <groupId>io.springgraph</groupId>
+        <groupId>io.github.mrsluffy</groupId>
         <artifactId>springgraph-processor</artifactId>
         <version>0.1.0-rc.2</version>
       </path>
