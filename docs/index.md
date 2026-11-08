@@ -1,3 +1,7 @@
+<!-- Material shows #only-light / #only-dark images with the matching color scheme. -->
+<img src="assets/logo.svg#only-light" alt="SpringGraph logo: three connected nodes" width="96" height="96">
+<img src="assets/logo-dark.svg#only-dark" alt="SpringGraph logo: three connected nodes" width="96" height="96">
+
 # SpringGraph
 
 **Write Spring. Catch wiring mistakes before startup.**

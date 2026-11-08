@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img src="docs/assets/logo.svg" alt="SpringGraph logo: three connected nodes" width="96" height="96">
+  </picture>
+</p>
+
 # SpringGraph
 
 Write Spring. Catch wiring mistakes before startup.
