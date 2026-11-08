@@ -16,15 +16,22 @@
 package io.springgraph.processor.internal.diagnostic;
 
 import io.springgraph.processor.internal.config.Mode;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
-/** Emits diagnostics as {@code "SGnnn: message"} with the severity rules from docs/reference/diagnostics.md. */
+/**
+ * Emits diagnostics as {@code "SGnnn: message"} with the severity rules from docs/reference/diagnostics.md, and records
+ * them, in emission order, for the machine-readable report.
+ */
 public final class Diagnostics {
 
     private final Messager messager;
     private final Mode mode;
+    private final List<Finding> findings = new ArrayList<>();
 
     public Diagnostics(Messager messager, Mode mode) {
         this.messager = messager;
@@ -50,7 +57,13 @@ public final class Diagnostics {
         messager.printMessage(Diagnostic.Kind.NOTE, message);
     }
 
+    /** Every coded diagnostic emitted so far, in emission order. */
+    public List<Finding> findings() {
+        return Collections.unmodifiableList(findings);
+    }
+
     private void print(Diagnostic.Kind kind, Code code, Element element, String message) {
+        findings.add(Finding.of(code, kind, element, message));
         String text = code.name() + ": " + message;
         if (element == null) {
             messager.printMessage(kind, text);

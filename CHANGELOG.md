@@ -16,6 +16,11 @@
 - **Coordinates changed**: the `groupId` is now `io.github.mrsluffy` (artifact `springgraph-processor` unchanged), the
   Maven Central namespace verified through the GitHub account. `0.1.0-rc.1` and `0.1.0-rc.2` remain on GitHub Packages
   under `io.springgraph`. Java package names are unchanged (`io.springgraph.processor`).
+- New machine-readable report `META-INF/springgraph/graph.json` (schema version 1), next to `graph.txt`: the graph plus
+  every finding tied to its class and constructor parameter. Also written when a strict build fails. See
+  `docs/reference/report-json.md`.
+- New, experimental IntelliJ plugin (`springgraph-intellij`, released separately, not on Marketplace yet): gutter icons
+  on constructor parameters and a SpringGraph tool window, both read from `graph.json`. See `docs/intellij.md`.
 
 ## 0.1.0 (experimental), 2026-11-07
 

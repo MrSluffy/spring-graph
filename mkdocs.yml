@@ -49,9 +49,11 @@ validation:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - IntelliJ plugin: intellij.md
   - Reference:
       - Diagnostics: reference/diagnostics.md
       - Support matrix: reference/support-matrix.md
+      - JSON report: reference/report-json.md
   - Architecture:
       - Graph boundaries: architecture/graph-boundaries.md
       - Spring integration: architecture/spring-integration.md

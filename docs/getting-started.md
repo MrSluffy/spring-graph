@@ -127,6 +127,9 @@ com.example.OrderService
 Coverage: 1 of 3 dependencies statically validated
 ```
 
+The same directory also has `graph.json`, a [machine-readable version](reference/report-json.md) for tools. In IntelliJ
+IDEA, the [SpringGraph plugin](intellij.md) shows it as gutter icons and a tool window.
+
 ## 4. Declare runtime boundaries
 
 A `<missing>` dependency that Spring does supply (Boot auto-configuration, a `@Bean` method, another module) is a **runtime

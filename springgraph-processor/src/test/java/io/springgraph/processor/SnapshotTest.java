@@ -178,7 +178,18 @@ class SnapshotTest {
                             .getCharContent(true));
         }
 
-        String name = "snapshots/full-" + mode + ".txt";
+        assertSnapshot("snapshots/full-" + mode + ".txt", actual.toString());
+        if (c.status() == Compilation.Status.SUCCESS) {
+            assertSnapshot(
+                    "snapshots/full-" + mode + ".json",
+                    c.generatedFile(StandardLocation.CLASS_OUTPUT, SpringGraphProcessor.JSON_REPORT_PATH)
+                            .orElseThrow()
+                            .getCharContent(true)
+                            .toString());
+        }
+    }
+
+    private static void assertSnapshot(String name, String actual) throws IOException {
         if (System.getProperty("updateSnapshots") != null) {
             Path target = Path.of("src/test/resources").resolve(name);
             Files.createDirectories(target.getParent());
@@ -189,7 +200,7 @@ class SnapshotTest {
             if (in == null) {
                 throw new IllegalStateException("Missing snapshot " + name + "; run with -PupdateSnapshots");
             }
-            assertEquals(new String(in.readAllBytes(), StandardCharsets.UTF_8).replace("\r", ""), actual.toString());
+            assertEquals(new String(in.readAllBytes(), StandardCharsets.UTF_8).replace("\r", ""), actual);
         }
     }
 }

@@ -26,6 +26,7 @@ import io.springgraph.processor.internal.findings.BoundaryChecker;
 import io.springgraph.processor.internal.findings.ResolutionReporter;
 import io.springgraph.processor.internal.model.Component;
 import io.springgraph.processor.internal.report.GraphReport;
+import io.springgraph.processor.internal.report.JsonReport;
 import io.springgraph.processor.internal.resolution.BoundaryUsage;
 import io.springgraph.processor.internal.resolution.DependencyResolver;
 import java.io.IOException;
@@ -50,7 +51,7 @@ import javax.tools.StandardLocation;
  *   <li>resolve every constructor dependency (SG006, SG008);</li>
  *   <li>check declared runtime boundaries (SG009);</li>
  *   <li>report missing and ambiguous bindings (SG001, SG007), then cycles (SG003);</li>
- *   <li>write the report, with a note when coverage is low.</li>
+ *   <li>write the text report, with a note when coverage is low, then the JSON report.</li>
  * </ol>
  */
 public final class GraphAnalysis {
@@ -85,7 +86,11 @@ public final class GraphAnalysis {
                     + " dependencies are statically validated; the rest are runtime boundaries, Spring Data repositories,"
                     + " @Value, or unsupported. See " + SpringGraphProcessor.REPORT_PATH + ".");
         }
-        write(report);
+        write(SpringGraphProcessor.REPORT_PATH, report.text());
+        // Written last, so it includes every finding above.
+        write(
+                SpringGraphProcessor.JSON_REPORT_PATH,
+                JsonReport.render(options.mode(), graph, configurationClasses, diagnostics.findings(), report));
     }
 
     private void discover(Set<String> candidateNames, Map<String, Component> graph, Set<String> configurationClasses) {
@@ -117,16 +122,14 @@ public final class GraphAnalysis {
         }
     }
 
-    private void write(GraphReport report) {
+    private void write(String path, String content) {
         try {
-            FileObject file =
-                    env.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", SpringGraphProcessor.REPORT_PATH);
+            FileObject file = env.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", path);
             try (Writer writer = file.openWriter()) {
-                writer.write(report.text());
+                writer.write(content);
             }
         } catch (IOException ex) {
-            diagnostics.warning(
-                    Code.SG009, "Could not write " + SpringGraphProcessor.REPORT_PATH + ": " + ex.getMessage());
+            diagnostics.warning(Code.SG009, "Could not write " + path + ": " + ex.getMessage());
         }
     }
 }
