@@ -19,7 +19,7 @@ in a real Spring context (`AnnotationConfigApplicationContext`), so each SpringG
 | 2 | Same, SpringGraph listed first | strict passes, 3 of 3 validated | (valid) | yes; order does not matter |
 | 3-4 | Missing implementation behind a Lombok constructor | SG001 at the class (strict fails, advisory warns) | `NoSuchBeanDefinitionException` | yes |
 | 5 | Field `@Qualifier` + `@RequiredArgsConstructor`, no `lombok.config` | SG007 ambiguous | `NoUniqueBeanDefinitionException` (Lombok does not copy the qualifier to the constructor) | yes; catches a known Lombok pitfall at build time |
-| 6 | Same with `lombok.copyableAnnotations += ...Qualifier` | SG008 unsupported | context starts | conservative (not validated, not wrong) |
+| 6 | Same with `lombok.copyableAnnotations += ...Qualifier` | SG008 unsupported in 0.1.0; validated since qualifier support (unreleased) | context starts | yes |
 | 7 | Two candidates, parameter named after one bean (`smsSender`) | **was SG007 (false positive when -parameters is on); now SG006** | fails without `-parameters`, starts with it | now consistent: outcome depends on a compiler flag the processor cannot see |
 
 Why Lombok works: Lombok adds the constructor to the AST before SpringGraph's analysis, which runs in the final processing round.

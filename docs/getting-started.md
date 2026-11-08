@@ -141,7 +141,7 @@ When the advisory build shows no findings you disagree with, set `-Aspringgraph.
 Checked: classes annotated directly with `@Component`, `@Service`, `@Repository`, `@Controller` or `@RestController` that have exactly
 one non-private constructor, including Lombok-generated ones. Missing, ambiguous and cyclic constructor dependencies are reported.
 
-Not checked (reported as not validated, never guessed): qualifiers, `@Primary`, generics and collections, `@Lazy`, providers, profile and
+Not checked (reported as not validated, never guessed): custom and `@Named` qualifiers, `@Priority`, generics and collections, `@Lazy`, providers, profile and
 conditional components, non-singleton scopes, `@Bean` methods, field and setter injection, other modules. See
 [support matrix](reference/support-matrix.md) and [diagnostics](reference/diagnostics.md).
 

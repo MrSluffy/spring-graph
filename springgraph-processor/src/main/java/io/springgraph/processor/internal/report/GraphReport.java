@@ -65,11 +65,11 @@ public record GraphReport(String text, int validated, int total) {
                 if (dependency.resolution().isValidated()) {
                     validated++;
                 }
-                sb.append("  ")
-                        .append(dependency.type())
-                        .append(" -> ")
-                        .append(describe(dependency))
-                        .append('\n');
+                sb.append("  ").append(dependency.type());
+                if (dependency.qualifier() != null) {
+                    sb.append(" @Qualifier(\"").append(dependency.qualifier()).append("\")");
+                }
+                sb.append(" -> ").append(describe(dependency)).append('\n');
             }
         }
 
@@ -105,12 +105,18 @@ public record GraphReport(String text, int validated, int total) {
 
     private static String describe(Dependency dependency) {
         return switch (dependency.resolution()) {
-            case STATIC -> dependency.target() + " [validated]";
+            case STATIC ->
+                dependency.target()
+                        + (dependency.reason() != null
+                                ? " [validated via " + dependency.reason() + "]"
+                                : " [validated]");
             case BOUNDARY -> "Spring runtime boundary [not statically validated]";
             case REPOSITORY -> "Spring Data repository, created at runtime [not statically validated]";
             case VALUE -> "@Value property/expression [not a bean, not validated]";
             case MISSING -> "<missing> [unresolved]";
-            case AMBIGUOUS -> "<ambiguous: " + String.join(", ", dependency.targets()) + "> [unresolved]";
+            case AMBIGUOUS ->
+                "<ambiguous" + ("@Primary".equals(dependency.reason()) ? " @Primary" : "") + ": "
+                        + String.join(", ", dependency.targets()) + "> [unresolved]";
             case UNSUPPORTED -> "[unsupported, not validated]";
         };
     }
