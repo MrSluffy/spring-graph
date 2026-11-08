@@ -36,6 +36,6 @@ Not applicable until [Gate B](gates.md) passes.
 |---|---|
 | Verified lifecycle, destruction, and proxy behavior | 🟡 Lifecycle and destruction verified in the integration spike; proxies only with a hand-rolled JDK proxy in a plain Spring context, not real AOP auto-proxying or Spring Boot |
 | Predictable registration ownership | ✅ In the integration spike |
-| Spring-owned scopes and singleton identity | ✅ In the integration spike |
+| Spring-owned scopes and singleton identity | 🟡 Singleton identity verified in the integration spike; scoped-bean behavior remains unverified. See [Spring integration](../architecture/spring-integration.md) |
 | Supported Spring AOT behavior documented | ❌ |
 | Evidence the extension is worth its complexity | ❌ |

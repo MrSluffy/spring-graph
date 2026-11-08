@@ -11,7 +11,7 @@ The plan has two independent go/no-go decisions. A failed construction gate does
 |---|---|
 | Useful diagnostics | Missing, ambiguous and cyclic dependencies reported at compile time with the dependency path and source location. The pilot compared against the root exception of a plain Spring context (`BeanCurrentlyInCreationException`), which does not list the cycle; Spring Boot's startup failure analysis does show the beans in a cycle, but only at startup |
 | Earlier feedback | About 3 s (compile) against about 11 s (Boot context test) on the pilot, for each seeded mistake |
-| Low configuration | Zero business-code changes and zero new annotations on all pilots. Configuration: one processor dependency and two compiler options |
+| Low configuration | Zero business-code changes and zero new annotations on all pilots. Configuration includes a processor dependency, two compiler options, and required runtime boundary declarations: two for the pilot's strict build and eight for the spring-petclinic-rest strict processing-only run |
 | Few false positives | Three classes found across four applications, all fixed with regression tests |
 
 **Caveat:** every pilot was run by the maintainers. Outside users have not tried it yet.
