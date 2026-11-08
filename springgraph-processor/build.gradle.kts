@@ -88,6 +88,14 @@ mavenPublishing {
     }
 }
 
+// The staging repository must only ever contain the version being released: clear leftovers from earlier versions.
+val stagingRepo = layout.buildDirectory.dir("staging-repo")
+tasks.withType<PublishToMavenRepository>().configureEach {
+    if (name.endsWith("ToStagingRepository")) {
+        doFirst { stagingRepo.get().asFile.deleteRecursively() }
+    }
+}
+
 publishing {
     repositories {
         // Release staging: a plain Maven-layout directory, written without any credentials or signing key.
@@ -95,13 +103,14 @@ publishing {
         // again (see docs/releasing.md). ./gradlew :springgraph-processor:publishAllPublicationsToStagingRepository
         maven {
             name = "Staging"
-            url = uri(layout.buildDirectory.dir("staging-repo"))
+            url = uri(stagingRepo)
         }
         // Manual use only; the release workflow does not run Gradle with credentials.
         // Credentials: ORG_GRADLE_PROJECT_GitHubPackagesUsername / ORG_GRADLE_PROJECT_GitHubPackagesPassword.
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/MrSluffy/spring-graph")
+            // GitHub Packages requires the owner in lowercase.
+            url = uri("https://maven.pkg.github.com/mrsluffy/spring-graph")
             credentials(PasswordCredentials::class)
         }
     }

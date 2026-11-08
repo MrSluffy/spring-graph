@@ -16,8 +16,25 @@ Releases are published to Maven Central and GitHub Packages, and attached to
 release is out, build it from source.
 
 - **Maven Central**: no extra repository needed for Maven; for Gradle use `mavenCentral()`.
-- **GitHub Packages**: add the repository `https://maven.pkg.github.com/MrSluffy/spring-graph`. GitHub requires a
-  token with `read:packages` even for public packages.
+- **GitHub Packages**: add the repository `https://maven.pkg.github.com/mrsluffy/spring-graph` (the owner must be
+  lowercase). GitHub requires a personal access token (classic) with `read:packages`, even for public packages. In
+  Gradle:
+
+  ```kotlin
+  repositories {
+      maven {
+          url = uri("https://maven.pkg.github.com/mrsluffy/spring-graph")
+          credentials {
+              username = providers.gradleProperty("gpr.user").getOrNull() ?: System.getenv("USERNAME")
+              password = providers.gradleProperty("gpr.key").getOrNull() ?: System.getenv("TOKEN")
+          }
+      }
+  }
+  ```
+
+  Put `gpr.user=<your GitHub username>` and `gpr.key=<token>` in `~/.gradle/gradle.properties`, never in the project.
+  For Maven, add a `<server>` with the same token to `~/.m2/settings.xml`, as described in
+  [GitHub's Maven registry docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 - **From source**: install into your local Maven repository, then use `mavenLocal()` in Gradle:
 
   ```
