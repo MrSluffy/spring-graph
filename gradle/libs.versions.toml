@@ -11,7 +11,7 @@ compile-testing = "0.24.0"
 lombok = "1.18.38"
 
 # Formatting (Spotless)
-spotless = "8.11.0"
+spotless = "8.12.0"
 palantir-java-format = "2.103.0"
 ktlint = "1.8.0"
 
