@@ -3,7 +3,7 @@
 java-toolchain = "21"
 java-release = "17"
 
-spring = "7.0.10"
+spring = "7.1.0"
 spring-boot = "3.5.16"
 jakarta-annotation = "3.0.0"
 junit = "6.1.3"
